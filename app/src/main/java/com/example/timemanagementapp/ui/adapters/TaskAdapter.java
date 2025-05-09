@@ -1,10 +1,12 @@
 package com.example.timemanagementapp.ui.adapters;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
@@ -60,20 +62,32 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
         
         // Отображение статуса
         holder.textViewStatus.setText(currentTask.getStatus());
-        
-        // Отображение приоритета (можно использовать значки или цвета)
+        // Здесь можно также добавить логику для изменения фона/цвета текста статуса, если потребуется
+        // Например, holder.textViewStatus.setBackgroundResource(R.drawable.status_background_completed);
+
+        // Отображение приоритета
         String priorityText;
+        int priorityColorResId;
+        int priorityTextColor = Color.WHITE; // По умолчанию белый текст
+
         switch (currentTask.getPriority()) {
-            case 1:
+            case 1: // Низкий
                 priorityText = "Низкий";
+                priorityColorResId = R.drawable.priority_background_low;
                 break;
-            case 3:
+            case 3: // Высокий
                 priorityText = "Высокий";
+                priorityColorResId = R.drawable.priority_background_high;
                 break;
-            default:
+            default: // Средний (например, 2 или любое другое значение)
                 priorityText = "Средний";
+                priorityColorResId = R.drawable.priority_background_medium;
+                priorityTextColor = Color.BLACK; // Для желтого фона лучше черный текст
+                break;
         }
         holder.textViewPriority.setText(priorityText);
+        holder.textViewPriority.setBackgroundResource(priorityColorResId);
+        holder.textViewPriority.setTextColor(priorityTextColor);
     }
 
     public Task getTaskAt(int position) {

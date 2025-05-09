@@ -45,13 +45,11 @@
                 android:id="@+id/text_view_task_priority"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/priority_background"
                 android:paddingStart="8dp"
                 android:paddingTop="2dp"
                 android:paddingEnd="8dp"
                 android:paddingBottom="2dp"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                android:textColor="@android:color/white"
                 tools:text="Высокий" />
 
             <TextView
