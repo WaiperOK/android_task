@@ -2,6 +2,7 @@ package com.example.timemanagementapp.ui.tasks;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -11,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +51,11 @@ public class TaskEditFragment extends Fragment {
     private AutoCompleteTextView autoCompletePriority;
     private AutoCompleteTextView autoCompleteStatus;
     private Spinner spinnerReminderTime;
+    private Chronometer chronometerTaskTime;
+    private TextView textViewTimeSpentTotal;
+    private Button buttonStartTimer;
+    private Button buttonPauseTimer;
+    private Button buttonStopTimer;
     private FloatingActionButton fabSaveTask;
     
     private Calendar selectedDueDate = null;
@@ -79,6 +86,10 @@ public class TaskEditFragment extends Fragment {
             return displayText;
         }
     }
+
+    private boolean isTimerRunning = false;
+    private long timeWhenPaused = 0;
+    private long accumulatedTimeSpentSession = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -144,11 +155,18 @@ public class TaskEditFragment extends Fragment {
         autoCompletePriority = view.findViewById(R.id.auto_complete_priority);
         autoCompleteStatus = view.findViewById(R.id.auto_complete_status);
         spinnerReminderTime = view.findViewById(R.id.spinner_reminder_time);
+        chronometerTaskTime = view.findViewById(R.id.chronometer_task_time);
+        textViewTimeSpentTotal = view.findViewById(R.id.text_view_time_spent_total);
+        buttonStartTimer = view.findViewById(R.id.button_start_timer);
+        buttonPauseTimer = view.findViewById(R.id.button_pause_timer);
+        buttonStopTimer = view.findViewById(R.id.button_stop_timer);
         fabSaveTask = view.findViewById(R.id.fab_save_task);
         
         // Настройка выпадающих списков
         setupDropdownLists();
         setupReminderSpinner();
+        setupTimerControls();
+        updateTotalTimeSpentDisplay();
         
         // Обработчик клика на кнопку выбора даты
         buttonPickDate.setOnClickListener(v -> showDatePickerDialog());
@@ -233,6 +251,69 @@ public class TaskEditFragment extends Fragment {
         datePickerDialog.show();
     }
     
+    private void setupTimerControls() {
+        buttonStartTimer.setOnClickListener(v -> startTimer());
+        buttonPauseTimer.setOnClickListener(v -> pauseTimer());
+        buttonStopTimer.setOnClickListener(v -> stopTimer());
+    }
+
+    private void startTimer() {
+        if (!isTimerRunning) {
+            if (timeWhenPaused == 0) {
+                chronometerTaskTime.setBase(SystemClock.elapsedRealtime());
+            } else {
+                chronometerTaskTime.setBase(SystemClock.elapsedRealtime() - timeWhenPaused);
+            }
+            chronometerTaskTime.start();
+            isTimerRunning = true;
+            buttonStartTimer.setEnabled(false);
+            buttonPauseTimer.setEnabled(true);
+            buttonStopTimer.setEnabled(true);
+            timeWhenPaused = 0;
+        }
+    }
+
+    private void pauseTimer() {
+        if (isTimerRunning) {
+            chronometerTaskTime.stop();
+            timeWhenPaused = SystemClock.elapsedRealtime() - chronometerTaskTime.getBase();
+            isTimerRunning = false;
+            buttonStartTimer.setEnabled(true);
+            buttonPauseTimer.setEnabled(false);
+            buttonStopTimer.setEnabled(true);
+        }
+    }
+
+    private void stopTimer() {
+        if (isTimerRunning || timeWhenPaused != 0) {
+            chronometerTaskTime.stop();
+            long currentSessionTime = (timeWhenPaused != 0) ? 
+                                      timeWhenPaused : 
+                                      (SystemClock.elapsedRealtime() - chronometerTaskTime.getBase());
+            
+            accumulatedTimeSpentSession += currentSessionTime;
+            timeWhenPaused = 0;
+            chronometerTaskTime.setBase(SystemClock.elapsedRealtime());
+            isTimerRunning = false;
+            buttonStartTimer.setEnabled(true);
+            buttonPauseTimer.setEnabled(false);
+            buttonStopTimer.setEnabled(false);
+            updateTotalTimeSpentDisplay();
+        }
+    }
+    
+    private void updateTotalTimeSpentDisplay() {
+        long totalTime = (currentTask != null ? currentTask.getTimeSpentMillis() : 0) + accumulatedTimeSpentSession;
+        textViewTimeSpentTotal.setText("Всего затрачено: " + formatMillisToTime(totalTime));
+    }
+
+    private String formatMillisToTime(long millis) {
+        long seconds = (millis / 1000) % 60;
+        long minutes = (millis / (1000 * 60)) % 60;
+        long hours = (millis / (1000 * 60 * 60)) % 24;
+        return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds);
+    }
+
     private void fillFormWithTaskData() {
         if (currentTask == null) return;
         
@@ -284,6 +365,7 @@ public class TaskEditFragment extends Fragment {
         } else {
             spinnerReminderTime.setSelection(0); // "Не напоминать"
         }
+        updateTotalTimeSpentDisplay();
     }
     
     private void saveTask() {
@@ -327,6 +409,16 @@ public class TaskEditFragment extends Fragment {
         ReminderOption selectedReminderOption = (ReminderOption) spinnerReminderTime.getSelectedItem();
         Long reminderOffset = selectedReminderOption.offsetMillis;
 
+        if (isTimerRunning) {
+            pauseTimer();
+        }
+        if (timeWhenPaused != 0) {
+            accumulatedTimeSpentSession += timeWhenPaused;
+            timeWhenPaused = 0;
+        }
+
+        long finalTimeSpent = (currentTask != null ? currentTask.getTimeSpentMillis() : 0) + accumulatedTimeSpentSession;
+
         if (isEditMode && currentTask != null) {
             // Обновление существующей задачи
             currentTask.setTitle(title);
@@ -336,6 +428,7 @@ public class TaskEditFragment extends Fragment {
             currentTask.setDueDate(dueDate);
             currentTask.setUpdatedAt(new Date());
             currentTask.setReminderOffsetMillisBeforeDueDate(reminderOffset);
+            currentTask.setTimeSpentMillis(finalTimeSpent);
             taskViewModel.update(currentTask);
             Toast.makeText(requireContext(), "Задача обновлена", Toast.LENGTH_SHORT).show();
         } else {
@@ -346,6 +439,7 @@ public class TaskEditFragment extends Fragment {
             newTask.setStatus(status);
             newTask.setDueDate(dueDate);
             newTask.setReminderOffsetMillisBeforeDueDate(reminderOffset);
+            newTask.setTimeSpentMillis(finalTimeSpent);
             
             taskViewModel.insert(newTask);
             Toast.makeText(requireContext(), "Задача создана", Toast.LENGTH_SHORT).show();
@@ -389,5 +483,13 @@ public class TaskEditFragment extends Fragment {
         }
         
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (isTimerRunning) {
+            pauseTimer();
+        }
     }
 } 

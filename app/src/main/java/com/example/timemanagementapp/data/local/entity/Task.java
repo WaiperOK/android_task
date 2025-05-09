@@ -77,6 +77,9 @@ public class Task {
     @ColumnInfo(name = "reminder_offset_millis")
     public Long reminderOffsetMillisBeforeDueDate; // null if no reminder, 0 for on-time, >0 for before
 
+    @ColumnInfo(name = "time_spent_millis")
+    public long timeSpentMillis; // Общее затраченное время на задачу в миллисекундах
+
     public Task(@NonNull String title, @NonNull String creatorUserId) {
         this.taskId = UUID.randomUUID().toString();
         this.title = title;
@@ -223,5 +226,14 @@ public class Task {
 
     public void setReminderOffsetMillisBeforeDueDate(Long reminderOffsetMillisBeforeDueDate) {
         this.reminderOffsetMillisBeforeDueDate = reminderOffsetMillisBeforeDueDate;
+    }
+
+    // Getter and Setter for timeSpentMillis
+    public long getTimeSpentMillis() {
+        return timeSpentMillis;
+    }
+
+    public void setTimeSpentMillis(long timeSpentMillis) {
+        this.timeSpentMillis = timeSpentMillis;
     }
 } 

@@ -11,7 +11,7 @@ import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.data.local.entity.Task;
 import com.example.timemanagementapp.data.local.entity.User;
 
-@Database(entities = {Task.class, Project.class, User.class}, version = 2, exportSchema = false)
+@Database(entities = {Task.class, Project.class, User.class}, version = 3, exportSchema = false)
 @TypeConverters({DateConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static final String DATABASE_NAME = "time_management_db";
