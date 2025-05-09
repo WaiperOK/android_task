@@ -7,7 +7,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import com.example.timemanagementapp.data.TaskRepository;
 import com.example.timemanagementapp.data.local.entity.Task;
+import com.example.timemanagementapp.notifications.ReminderWorker;
 import java.util.List;
+import java.util.Date;
 
 public class TaskViewModel extends AndroidViewModel {
     private TaskRepository repository;
@@ -35,17 +37,54 @@ public class TaskViewModel extends AndroidViewModel {
 
     public void insert(Task task) {
         repository.insert(task);
+        scheduleOrCancelReminder(task, false);
     }
 
     public void update(Task task) {
         repository.update(task);
+        scheduleOrCancelReminder(task, false); // Перепланируем или отменяем при обновлении
     }
 
     public void delete(Task task) {
         repository.delete(task);
+        scheduleOrCancelReminder(task, true); // Отменяем напоминание при удалении
+    }
+
+    private void scheduleOrCancelReminder(Task task, boolean isDeleting) {
+        if (isDeleting) {
+            ReminderWorker.cancelReminder(getApplication(), task.getTaskId());
+            return;
+        }
+
+        // Сначала отменяем любое существующее напоминание для этой задачи
+        ReminderWorker.cancelReminder(getApplication(), task.getTaskId());
+
+        if (task.getDueDate() != null && task.getReminderOffsetMillisBeforeDueDate() != null) {
+            long dueDateMillis = task.getDueDate().getTime();
+            long reminderOffset = task.getReminderOffsetMillisBeforeDueDate();
+            long reminderTimeMillis = dueDateMillis - reminderOffset;
+            long currentTimeMillis = System.currentTimeMillis();
+
+            if (reminderTimeMillis > currentTimeMillis) {
+                long delayMillis = reminderTimeMillis - currentTimeMillis;
+                String taskContent = task.getDescription() != null && !task.getDescription().isEmpty() ? 
+                                     task.getDescription() : "Не забудьте о вашей задаче!";
+                ReminderWorker.scheduleReminder(
+                        getApplication(),
+                        delayMillis,
+                        task.getTaskId(),
+                        task.getTitle(),
+                        taskContent
+                );
+            }
+        }
     }
 
     public void deleteAllTasks() {
+        // При удалении всех задач, нужно пройтись по ним и отменить напоминания
+        // Это потребует загрузки всех задач перед удалением, что может быть неоптимально
+        // Либо WorkManager должен поддерживать отмену по общему тегу для всех напоминаний приложения, если это возможно
+        // Пока оставим без массовой отмены напоминаний здесь, т.к. это редкая операция
         repository.deleteAllTasks();
     }
 

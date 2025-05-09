@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,10 +28,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class TaskEditFragment extends Fragment {
     
@@ -44,6 +48,7 @@ public class TaskEditFragment extends Fragment {
     private TextView textViewSelectedDate;
     private AutoCompleteTextView autoCompletePriority;
     private AutoCompleteTextView autoCompleteStatus;
+    private Spinner spinnerReminderTime;
     private FloatingActionButton fabSaveTask;
     
     private Calendar selectedDueDate = null;
@@ -55,13 +60,34 @@ public class TaskEditFragment extends Fragment {
     // Массивы для выпадающих списков
     private final String[] priorities = new String[]{"Низкий", "Средний", "Высокий"};
     private final String[] statuses = new String[]{"Новая", "В процессе", "Завершена"};
-    
+    // Варианты для напоминаний
+    private List<ReminderOption> reminderOptions;
+
+    // Класс для представления опций напоминания
+    private static class ReminderOption {
+        String displayText;
+        Long offsetMillis;
+
+        ReminderOption(String displayText, Long offsetMillis) {
+            this.displayText = displayText;
+            this.offsetMillis = offsetMillis;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return displayText;
+        }
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         taskViewModel = new ViewModelProvider(requireActivity()).get(TaskViewModel.class);
         setHasOptionsMenu(true);
         
+        initializeReminderOptions();
+
         if (getArguments() != null) {
             // Проверка, открываем ли мы фрагмент для редактирования существующей задачи
             if (getArguments().containsKey(ARG_TASK_ID)) {
@@ -86,6 +112,17 @@ public class TaskEditFragment extends Fragment {
         }
     }
     
+    private void initializeReminderOptions() {
+        reminderOptions = Arrays.asList(
+                new ReminderOption("Не напоминать", null),
+                new ReminderOption("В день события", 0L),
+                new ReminderOption("За 15 минут", TimeUnit.MINUTES.toMillis(15)),
+                new ReminderOption("За 30 минут", TimeUnit.MINUTES.toMillis(30)),
+                new ReminderOption("За 1 час", TimeUnit.HOURS.toMillis(1)),
+                new ReminderOption("За 1 день", TimeUnit.DAYS.toMillis(1))
+        );
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -106,10 +143,12 @@ public class TaskEditFragment extends Fragment {
         textViewSelectedDate = view.findViewById(R.id.text_view_selected_date);
         autoCompletePriority = view.findViewById(R.id.auto_complete_priority);
         autoCompleteStatus = view.findViewById(R.id.auto_complete_status);
+        spinnerReminderTime = view.findViewById(R.id.spinner_reminder_time);
         fabSaveTask = view.findViewById(R.id.fab_save_task);
         
         // Настройка выпадающих списков
         setupDropdownLists();
+        setupReminderSpinner();
         
         // Обработчик клика на кнопку выбора даты
         buttonPickDate.setOnClickListener(v -> showDatePickerDialog());
@@ -125,6 +164,28 @@ public class TaskEditFragment extends Fragment {
         return view;
     }
     
+    private void setupReminderSpinner() {
+        ArrayAdapter<ReminderOption> reminderAdapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                reminderOptions
+        );
+        reminderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerReminderTime.setAdapter(reminderAdapter);
+
+        // Установка значения по умолчанию или из currentTask
+        if (currentTask != null && currentTask.getReminderOffsetMillisBeforeDueDate() != null) {
+            for (int i = 0; i < reminderOptions.size(); i++) {
+                if (Objects.equals(reminderOptions.get(i).offsetMillis, currentTask.getReminderOffsetMillisBeforeDueDate())) {
+                    spinnerReminderTime.setSelection(i);
+                    break;
+                }
+            }
+        } else {
+            spinnerReminderTime.setSelection(0); // По умолчанию "Не напоминать"
+        }
+    }
+
     private void setupDropdownLists() {
         // Настройка выпадающего списка приоритетов
         ArrayAdapter<String> priorityAdapter = new ArrayAdapter<>(
@@ -211,6 +272,18 @@ public class TaskEditFragment extends Fragment {
                 statusIndex = 0; // Новая
         }
         autoCompleteStatus.setText(statuses[statusIndex], false);
+
+        // Установка выбранного значения в Spinner напоминаний
+        if (currentTask.getReminderOffsetMillisBeforeDueDate() != null) {
+            for (int i = 0; i < reminderOptions.size(); i++) {
+                if (Objects.equals(reminderOptions.get(i).offsetMillis, currentTask.getReminderOffsetMillisBeforeDueDate())) {
+                    spinnerReminderTime.setSelection(i);
+                    break;
+                }
+            }
+        } else {
+            spinnerReminderTime.setSelection(0); // "Не напоминать"
+        }
     }
     
     private void saveTask() {
@@ -249,7 +322,11 @@ public class TaskEditFragment extends Fragment {
         if (selectedDueDate != null) {
             dueDate = selectedDueDate.getTime();
         }
-        
+
+        // Получение выбранного смещения для напоминания
+        ReminderOption selectedReminderOption = (ReminderOption) spinnerReminderTime.getSelectedItem();
+        Long reminderOffset = selectedReminderOption.offsetMillis;
+
         if (isEditMode && currentTask != null) {
             // Обновление существующей задачи
             currentTask.setTitle(title);
@@ -258,7 +335,7 @@ public class TaskEditFragment extends Fragment {
             currentTask.setStatus(status);
             currentTask.setDueDate(dueDate);
             currentTask.setUpdatedAt(new Date());
-            
+            currentTask.setReminderOffsetMillisBeforeDueDate(reminderOffset);
             taskViewModel.update(currentTask);
             Toast.makeText(requireContext(), "Задача обновлена", Toast.LENGTH_SHORT).show();
         } else {
@@ -268,6 +345,7 @@ public class TaskEditFragment extends Fragment {
             newTask.setPriority(priority);
             newTask.setStatus(status);
             newTask.setDueDate(dueDate);
+            newTask.setReminderOffsetMillisBeforeDueDate(reminderOffset);
             
             taskViewModel.insert(newTask);
             Toast.makeText(requireContext(), "Задача создана", Toast.LENGTH_SHORT).show();
@@ -282,7 +360,12 @@ public class TaskEditFragment extends Fragment {
         inflater.inflate(R.menu.menu_task_edit, menu);
         
         // Скрываем пункт меню "Удалить", если это режим создания новой задачи
-        menu.findItem(R.id.action_delete_task).setVisible(isEditMode);
+        if (!isEditMode) {
+            MenuItem deleteItem = menu.findItem(R.id.action_delete_task);
+            if (deleteItem != null) {
+                deleteItem.setVisible(false);
+            }
+        }
         
         super.onCreateOptionsMenu(menu, inflater);
     }

@@ -1,14 +1,14 @@
 package com.example.timemanagementapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.example.timemanagementapp.notifications.NotificationHelper;
 import com.example.timemanagementapp.ui.calendar.CalendarFragment;
+import com.example.timemanagementapp.ui.tasks.TaskEditFragment;
 import com.example.timemanagementapp.ui.tasks.TaskListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import java.time.YearMonth;
-import java.util.Date;
 
 /**
  * Главное активити приложения.
@@ -60,9 +60,39 @@ public class MainActivity extends AppCompatActivity {
 
         // Установка фрагмента по умолчанию при запуске
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.nav_host_fragment, new TaskListFragment())
-                    .commit();
+            // Проверяем, был ли запуск из уведомления
+            if (getIntent() != null && getIntent().hasExtra("taskId")) {
+                String taskId = getIntent().getStringExtra("taskId");
+                openTaskEditFragmentForNotification(taskId);
+            } else {
+                // Обычный запуск, открываем список задач
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.nav_host_fragment, new TaskListFragment())
+                        .commit();
+            }
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // Важно обновить интент активити
+        // Проверяем, был ли запуск из уведомления, если активити уже было создано
+        if (intent != null && intent.hasExtra("taskId")) {
+            String taskId = intent.getStringExtra("taskId");
+            openTaskEditFragmentForNotification(taskId);
+        }
+    }
+
+    private void openTaskEditFragmentForNotification(String taskId) {
+        TaskEditFragment fragment = new TaskEditFragment();
+        Bundle args = new Bundle();
+        args.putString(TaskEditFragment.ARG_TASK_ID, taskId);
+        fragment.setArguments(args);
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.nav_host_fragment, fragment)
+                .addToBackStack(null) // Позволяет вернуться к предыдущему состоянию
+                .commit();
     }
 }

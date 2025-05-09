@@ -74,6 +74,9 @@ public class Task {
     @ColumnInfo(name = "completed_at")
     public Date completedAt;
 
+    @ColumnInfo(name = "reminder_offset_millis")
+    public Long reminderOffsetMillisBeforeDueDate; // null if no reminder, 0 for on-time, >0 for before
+
     public Task(@NonNull String title, @NonNull String creatorUserId) {
         this.taskId = UUID.randomUUID().toString();
         this.title = title;
@@ -211,5 +214,14 @@ public class Task {
 
     public void setCompletedAt(Date completedAt) {
         this.completedAt = completedAt;
+    }
+
+    // Getter and Setter for reminderOffsetMillisBeforeDueDate
+    public Long getReminderOffsetMillisBeforeDueDate() {
+        return reminderOffsetMillisBeforeDueDate;
+    }
+
+    public void setReminderOffsetMillisBeforeDueDate(Long reminderOffsetMillisBeforeDueDate) {
+        this.reminderOffsetMillisBeforeDueDate = reminderOffsetMillisBeforeDueDate;
     }
 } 
