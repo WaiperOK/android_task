@@ -88,6 +88,27 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
         holder.textViewPriority.setText(priorityText);
         holder.textViewPriority.setBackgroundResource(priorityColorResId);
         holder.textViewPriority.setTextColor(priorityTextColor);
+
+        // Отображение затраченного времени
+        if (currentTask.getTimeSpentMillis() > 0) {
+            holder.textViewTimeSpent.setVisibility(View.VISIBLE);
+            holder.textViewTimeSpent.setText(formatMillisToTime(currentTask.getTimeSpentMillis()));
+        } else {
+            holder.textViewTimeSpent.setVisibility(View.GONE); // Скрываем, если время не отслеживалось
+        }
+    }
+
+    private String formatMillisToTime(long millis) {
+        long seconds = (millis / 1000) % 60;
+        long minutes = (millis / (1000 * 60)) % 60;
+        long hours = (millis / (1000 * 60 * 60)); // Не ограничиваем 24 часами, т.к. это общее время
+        if (hours > 0) {
+            return String.format(Locale.getDefault(), "%d ч %02d мин", hours, minutes);
+        } else if (minutes > 0) {
+            return String.format(Locale.getDefault(), "%d мин %02d сек", minutes, seconds);
+        } else {
+            return String.format(Locale.getDefault(), "%d сек", seconds);
+        }
     }
 
     public Task getTaskAt(int position) {
@@ -99,6 +120,7 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
         private TextView textViewDueDate;
         private TextView textViewStatus;
         private TextView textViewPriority;
+        private TextView textViewTimeSpent;
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -106,6 +128,7 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
             textViewDueDate = itemView.findViewById(R.id.text_view_task_due_date);
             textViewStatus = itemView.findViewById(R.id.text_view_task_status);
             textViewPriority = itemView.findViewById(R.id.text_view_task_priority);
+            textViewTimeSpent = itemView.findViewById(R.id.text_view_time_spent);
 
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();

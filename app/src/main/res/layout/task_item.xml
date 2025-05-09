@@ -65,6 +65,18 @@
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
                 android:textColor="@android:color/white"
                 tools:text="В процессе" />
+
+            <TextView
+                android:id="@+id/text_view_time_spent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:drawablePadding="4dp"
+                android:gravity="center_vertical"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                tools:text="00:15:30"
+                app:drawableStartCompat="@drawable/ic_time_spent" />
+
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView> 
