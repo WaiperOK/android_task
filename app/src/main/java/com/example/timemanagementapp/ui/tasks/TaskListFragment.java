@@ -43,7 +43,7 @@ public class TaskListFragment extends Fragment {
         recyclerView.setHasFixedSize(true);
 
         // Инициализация адаптера
-        adapter = new TaskAdapter();
+        adapter = new TaskAdapter(taskViewModel);
         recyclerView.setAdapter(adapter);
 
         // Наблюдение за LiveData из ViewModel

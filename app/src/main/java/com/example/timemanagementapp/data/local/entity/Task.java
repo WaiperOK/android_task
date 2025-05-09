@@ -80,6 +80,9 @@ public class Task {
     @ColumnInfo(name = "time_spent_millis")
     public long timeSpentMillis; // Общее затраченное время на задачу в миллисекундах
 
+    @ColumnInfo(name = "time_tracking_start_time_millis")
+    public Long timeTrackingStartTimeMillis; // New field to store the start time of current tracking session
+
     public Task(@NonNull String title, @NonNull String creatorUserId) {
         this.taskId = UUID.randomUUID().toString();
         this.title = title;
@@ -90,6 +93,28 @@ public class Task {
         Date now = new Date();
         this.createdAt = now;
         this.updatedAt = now;
+    }
+
+    // Конструктор копирования
+    public Task(@NonNull Task original) {
+        this.taskId = original.taskId;
+        this.projectId = original.projectId;
+        this.title = original.title;
+        this.description = original.description;
+        this.assigneeUserId = original.assigneeUserId;
+        this.creatorUserId = original.creatorUserId;
+        this.dueDate = original.dueDate;
+        this.priority = original.priority;
+        this.status = original.status;
+        this.isRecurring = original.isRecurring;
+        this.recurrenceRule = original.recurrenceRule;
+        this.parentTaskId = original.parentTaskId;
+        this.createdAt = original.createdAt;
+        this.updatedAt = original.updatedAt; // Можно new Date() если хотим обновлять updatedAt при каждой копии для изменения
+        this.completedAt = original.completedAt;
+        this.reminderOffsetMillisBeforeDueDate = original.reminderOffsetMillisBeforeDueDate;
+        this.timeSpentMillis = original.timeSpentMillis;
+        this.timeTrackingStartTimeMillis = original.timeTrackingStartTimeMillis;
     }
 
     // Getters and setters
@@ -235,5 +260,13 @@ public class Task {
 
     public void setTimeSpentMillis(long timeSpentMillis) {
         this.timeSpentMillis = timeSpentMillis;
+    }
+
+    public Long getTimeTrackingStartTimeMillis() {
+        return timeTrackingStartTimeMillis;
+    }
+
+    public void setTimeTrackingStartTimeMillis(Long timeTrackingStartTimeMillis) {
+        this.timeTrackingStartTimeMillis = timeTrackingStartTimeMillis;
     }
 } 

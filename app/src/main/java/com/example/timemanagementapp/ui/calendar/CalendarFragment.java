@@ -56,9 +56,7 @@ public class CalendarFragment extends Fragment {
 
         calendarView = view.findViewById(R.id.calendarView);
         tasksRecyclerView = view.findViewById(R.id.recycler_view_calendar_tasks);
-        taskViewModel = new ViewModelProvider(requireActivity()).get(TaskViewModel.class);
 
-        setupRecyclerView();
         setupCalendarView();
         observeTasks();
         
@@ -76,9 +74,22 @@ public class CalendarFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        taskViewModel = new ViewModelProvider(requireActivity()).get(TaskViewModel.class);
+
+        setupRecyclerView();
+        
+        // Добавляем слушатель клика на задачу
+        taskAdapter.setOnItemClickListener(task -> {
+            openTaskEditFragmentWithDate(task.getTaskId(), null);
+        });
+    }
+
     private void setupRecyclerView() {
         tasksRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        taskAdapter = new TaskAdapter();
+        taskAdapter = new TaskAdapter(taskViewModel);
         tasksRecyclerView.setAdapter(taskAdapter);
         
         // Добавляем слушатель клика на задачу

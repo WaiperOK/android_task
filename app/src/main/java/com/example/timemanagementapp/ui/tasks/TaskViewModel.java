@@ -10,8 +10,10 @@ import com.example.timemanagementapp.data.local.entity.Task;
 import com.example.timemanagementapp.notifications.ReminderWorker;
 import java.util.List;
 import java.util.Date;
+import android.util.Log;
 
 public class TaskViewModel extends AndroidViewModel {
+    private static final String TAG = "TaskViewModel";
     private TaskRepository repository;
     private MediatorLiveData<List<Task>> allTasksMediator = new MediatorLiveData<>();
     private LiveData<List<Task>> tasksSortedByDueDate;
@@ -126,5 +128,32 @@ public class TaskViewModel extends AndroidViewModel {
 
     public SortMode getCurrentSortMode() {
         return currentSortMode;
+    }
+
+    public void startTrackingTime(Task task) {
+        if (task != null) {
+            Log.d(TAG, "startTrackingTime for task: " + task.getTitle() + " ID: " + task.getTaskId());
+            Task updatedTask = new Task(task); // Используем конструктор копирования
+            updatedTask.setTimeTrackingStartTimeMillis(System.currentTimeMillis());
+            updatedTask.setUpdatedAt(new Date()); // Обновляем время последнего изменения
+            Log.d(TAG, "Task " + updatedTask.getTaskId() + " new startTime: " + updatedTask.getTimeTrackingStartTimeMillis());
+            update(updatedTask);
+        }
+    }
+
+    public void stopTrackingTime(Task task) {
+        if (task != null && task.getTimeTrackingStartTimeMillis() != null) {
+            Log.d(TAG, "stopTrackingTime for task: " + task.getTitle() + " ID: " + task.getTaskId());
+            Task updatedTask = new Task(task); // Используем конструктор копирования
+            
+            long timeTrackedSession = System.currentTimeMillis() - updatedTask.getTimeTrackingStartTimeMillis(); // startTime берем из копии (такой же как в оригинале)
+            long previousTimeSpent = updatedTask.getTimeSpentMillis();
+            updatedTask.setTimeSpentMillis(previousTimeSpent + timeTrackedSession);
+            updatedTask.setTimeTrackingStartTimeMillis(null);
+            updatedTask.setUpdatedAt(new Date()); // Обновляем время последнего изменения
+
+            Log.d(TAG, "Task " + updatedTask.getTaskId() + " new totalTimeSpent: " + updatedTask.getTimeSpentMillis() + ", startTime reset to null");
+            update(updatedTask);
+        }
     }
 } 
