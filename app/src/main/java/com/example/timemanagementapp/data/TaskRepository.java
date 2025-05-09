@@ -54,4 +54,9 @@ public class TaskRepository {
     public LiveData<List<Task>> getActiveTasksForUser(String userId) {
         return taskDao.getActiveTasksForUser(userId);
     }
+
+    // Новый метод для получения задач, отсортированных по приоритету
+    public LiveData<List<Task>> getAllTasksSortedByPriority() {
+        return taskDao.getAllTasksSortedByPriority();
+    }
 } 

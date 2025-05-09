@@ -38,4 +38,7 @@ public interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE assignee_user_id = :userId AND status != 'done' ORDER BY due_date ASC")
     LiveData<List<Task>> getActiveTasksForUser(String userId);
+
+    @Query("SELECT * FROM tasks ORDER BY priority DESC, due_date ASC")
+    LiveData<List<Task>> getAllTasksSortedByPriority();
 } 

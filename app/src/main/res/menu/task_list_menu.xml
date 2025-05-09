@@ -1,0 +1,19 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/action_sort_by_due_date"
+            android:title="Сортировать по дате"
+            android:checked="true" 
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/action_sort_by_priority"
+            android:title="Сортировать по приоритету"
+            app:showAsAction="never" />
+    </group>
+
+    <!-- Можно добавить другие пункты меню, например, "Удалить все выполненные" -->
+
+</menu> 

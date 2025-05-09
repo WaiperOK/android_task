@@ -2,6 +2,9 @@ package com.example.timemanagementapp.ui.tasks;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
@@ -23,6 +26,8 @@ public class TaskListFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Сообщаем, что у фрагмента есть свое меню
+        setHasOptionsMenu(true);
         // Инициализация ViewModel
         taskViewModel = new ViewModelProvider(this).get(TaskViewModel.class);
     }
@@ -45,6 +50,10 @@ public class TaskListFragment extends Fragment {
         taskViewModel.getAllTasks().observe(getViewLifecycleOwner(), tasks -> {
             adapter.submitList(tasks);
             // Здесь можно добавить логику для отображения пустого состояния, если tasks.isEmpty()
+            // Также обновить состояние пунктов меню сортировки
+            if (getActivity() != null) {
+                getActivity().invalidateOptionsMenu();
+            }
         });
 
         // Настройка слушателя клика по элементу
@@ -61,6 +70,41 @@ public class TaskListFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.task_list_menu, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(@NonNull Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        // Отмечаем текущий активный режим сортировки
+        MenuItem sortByDueDateItem = menu.findItem(R.id.action_sort_by_due_date);
+        MenuItem sortByPriorityItem = menu.findItem(R.id.action_sort_by_priority);
+
+        if (taskViewModel.getCurrentSortMode() == TaskViewModel.SortMode.BY_PRIORITY) {
+            sortByPriorityItem.setChecked(true);
+            sortByDueDateItem.setChecked(false);
+        } else {
+            sortByDueDateItem.setChecked(true);
+            sortByPriorityItem.setChecked(false);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_sort_by_due_date) {
+            taskViewModel.setSortMode(TaskViewModel.SortMode.BY_DUE_DATE);
+            return true;
+        } else if (itemId == R.id.action_sort_by_priority) {
+            taskViewModel.setSortMode(TaskViewModel.SortMode.BY_PRIORITY);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
     
     /**
