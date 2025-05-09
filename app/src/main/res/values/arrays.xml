@@ -1,0 +1,26 @@
+<resources>
+    <!-- Priority Levels (Used in TaskEditFragment Spinner) -->
+    <string-array name="priority_levels">
+        <item>Низкий</item>
+        <item>Средний</item>
+        <item>Высокий</item>
+    </string-array>
+
+    <!-- Task Statuses - Display Names (Used in TaskEditFragment Spinner) -->
+    <string-array name="task_statuses_display">
+        <item>К выполнению</item>
+        <item>В процессе</item>
+        <item>Выполнена</item>
+        <item>Отложена</item>
+        <item>Отменена</item>
+    </string-array>
+
+    <!-- Task Statuses - Values (Corresponding values for storage/logic) -->
+    <string-array name="task_statuses_values">
+        <item>todo</item>
+        <item>in_progress</item>
+        <item>done</item>
+        <item>on_hold</item>
+        <item>canceled</item>
+    </string-array>
+</resources> 

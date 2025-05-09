@@ -10,11 +10,11 @@
         android:layout_height="wrap_content">
 
         <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+            android:id="@+id/toolbar_task_edit"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:title="Новая задача"
+            app:title="Задача"
             app:titleTextColor="@android:color/white"
             app:menu="@menu/menu_task_edit" />
 
@@ -43,7 +43,7 @@
                     android:id="@+id/edit_text_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="textCapSentences"
                     android:maxLines="1" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -54,81 +54,86 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Описание задачи">
+                android:hint="Описание задачи (необязательно)">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_text_description"
+                    android:id="@+id/edit_text_task_description"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="top"
-                    android:inputType="textMultiLine"
+                    android:inputType="textMultiLine|textCapSentences"
                     android:minLines="3" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <RelativeLayout
+            <TextView
+                android:id="@+id/text_view_project_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Проект:"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+            <Spinner
+                android:id="@+id/spinner_project"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp">
-
-                <TextView
-                    android:id="@+id/text_view_due_date_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:text="Дата выполнения"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
-
-                <Button
-                    android:id="@+id/button_pick_date"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:text="Выбрать дату" />
-
-            </RelativeLayout>
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp" />
 
             <TextView
-                android:id="@+id/text_view_selected_date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Не выбрана"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/text_input_layout_priority"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
+                android:id="@+id/text_view_due_date_label"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Приоритет">
+                android:text="Дата выполнения"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
-                <AutoCompleteTextView
-                    android:id="@+id/auto_complete_priority"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/text_input_layout_status"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <TextView
+                android:id="@+id/text_view_due_date"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="?attr/editTextBackground"
+                android:padding="12dp"
+                android:text="Дата не установлена"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+
+            <Button
+                android:id="@+id/button_set_due_date"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:text="Изменить дату" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Статус">
+                android:text="Приоритет"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"/>
 
-                <AutoCompleteTextView
-                    android:id="@+id/auto_complete_status"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none" />
+            <Spinner
+                android:id="@+id/spinner_priority"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp" />
 
-            </com.google.android.material.textfield.TextInputLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Статус"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"/>
+
+            <Spinner
+                android:id="@+id/spinner_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp"/>
 
             <TextView
                 android:id="@+id/text_view_reminder_label"
@@ -143,8 +148,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:paddingTop="12dp"
-                android:paddingBottom="12dp" />
+                android:minHeight="48dp" />
 
             <TextView
                 android:id="@+id/text_view_time_tracking_label"
@@ -155,14 +159,14 @@
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
             <Chronometer
-                android:id="@+id/chronometer_task_time"
+                android:id="@+id/chronometer_task_timer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
             <TextView
-                android:id="@+id/text_view_time_spent_total"
+                android:id="@+id/text_view_total_time_spent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
@@ -215,6 +219,6 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:contentDescription="Сохранить задачу"
-        android:src="@drawable/ic_save" />
+        app:srcCompat="@drawable/ic_save" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

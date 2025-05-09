@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import com.example.timemanagementapp.data.TaskRepository;
 import com.example.timemanagementapp.data.local.entity.Task;
+import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.notifications.ReminderWorker;
 import java.util.List;
 import java.util.Date;
@@ -18,6 +19,7 @@ public class TaskViewModel extends AndroidViewModel {
     private MediatorLiveData<List<Task>> allTasksMediator = new MediatorLiveData<>();
     private LiveData<List<Task>> tasksSortedByDueDate;
     private LiveData<List<Task>> tasksSortedByPriority;
+    private LiveData<List<Project>> allProjects;
 
     // Enum для режимов сортировки
     public enum SortMode {
@@ -32,6 +34,7 @@ public class TaskViewModel extends AndroidViewModel {
         repository = new TaskRepository(application);
         tasksSortedByDueDate = repository.getAllTasks(); // Изначально это getAllTasksSortedByDueDate()
         tasksSortedByPriority = repository.getAllTasksSortedByPriority();
+        allProjects = repository.getAllProjects(); // Получаем все проекты
 
         // Наблюдаем за источником данных по умолчанию
         setSortMode(SortMode.BY_DUE_DATE);
@@ -155,5 +158,24 @@ public class TaskViewModel extends AndroidViewModel {
             Log.d(TAG, "Task " + updatedTask.getTaskId() + " new totalTimeSpent: " + updatedTask.getTimeSpentMillis() + ", startTime reset to null");
             update(updatedTask);
         }
+    }
+
+    // --- Методы для проектов ---
+    public LiveData<List<Project>> getAllProjects() {
+        return allProjects;
+    }
+
+    public void insertProject(Project project) {
+        repository.insertProject(project);
+    }
+
+    public void updateProject(Project project) {
+        repository.updateProject(project);
+    }
+
+    public void deleteProject(Project project) {
+        // Подумать о каскадном удалении или обработке задач, связанных с проектом
+        // В Task entity onDelete = ForeignKey.SET_NULL для project_id, так что projectId станет null
+        repository.deleteProject(project);
     }
 } 

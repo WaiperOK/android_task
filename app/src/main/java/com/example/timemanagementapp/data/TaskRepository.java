@@ -4,20 +4,26 @@ import android.app.Application;
 import androidx.lifecycle.LiveData;
 import com.example.timemanagementapp.data.local.AppDatabase;
 import com.example.timemanagementapp.data.local.dao.TaskDao;
+import com.example.timemanagementapp.data.local.dao.ProjectDao;
 import com.example.timemanagementapp.data.local.entity.Task;
+import com.example.timemanagementapp.data.local.entity.Project;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TaskRepository {
     private TaskDao taskDao;
+    private ProjectDao projectDao;
     private LiveData<List<Task>> allTasks;
+    private LiveData<List<Project>> allProjects;
     private ExecutorService executorService;
 
     public TaskRepository(Application application) {
         AppDatabase database = AppDatabase.getInstance(application);
         taskDao = database.taskDao();
+        projectDao = database.projectDao();
         allTasks = taskDao.getAllTasksSortedByDueDate();
+        allProjects = projectDao.getAllProjects();
         executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -36,6 +42,19 @@ public class TaskRepository {
 
     public void deleteAllTasks() {
         executorService.execute(() -> taskDao.deleteAllTasks());
+    }
+
+    // --- Project DAO операции ---
+    public void insertProject(Project project) {
+        executorService.execute(() -> projectDao.insertProject(project));
+    }
+
+    public void updateProject(Project project) {
+        executorService.execute(() -> projectDao.updateProject(project));
+    }
+
+    public void deleteProject(Project project) {
+        executorService.execute(() -> projectDao.deleteProject(project));
     }
 
     // --- Геттеры LiveData ---
@@ -58,5 +77,17 @@ public class TaskRepository {
     // Новый метод для получения задач, отсортированных по приоритету
     public LiveData<List<Task>> getAllTasksSortedByPriority() {
         return taskDao.getAllTasksSortedByPriority();
+    }
+
+    public LiveData<List<Project>> getAllProjects() {
+        return allProjects;
+    }
+
+    public LiveData<Project> getProjectById(String projectId) {
+        return projectDao.getProjectById(projectId);
+    }
+
+    public LiveData<List<Project>> getProjectsByOwner(String userId) {
+        return projectDao.getProjectsByOwner(userId);
     }
 } 
