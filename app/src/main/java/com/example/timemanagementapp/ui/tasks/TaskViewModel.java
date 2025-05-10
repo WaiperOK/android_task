@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Date;
 import android.util.Log;
 import com.example.timemanagementapp.data.local.entity.CurrentUserManager;
+import java.util.Calendar;
 
 public class TaskViewModel extends AndroidViewModel {
     private static final String TAG = "TaskViewModel";
@@ -40,6 +41,9 @@ public class TaskViewModel extends AndroidViewModel {
         tasksSortedByPriority = repository.getAllTasksSortedByPriority();
         allProjects = repository.getAllProjects(); // Получаем все проекты
         allUsers = repository.getAllUsers(); // Получаем всех пользователей
+
+        // Обновляем имена проектов на украинский язык
+        updateProjectNamesToUkrainian();
 
         // Добавление тестовых пользователей, если их нет
         allUsers.observeForever(new androidx.lifecycle.Observer<List<User>>() {
@@ -68,6 +72,8 @@ public class TaskViewModel extends AndroidViewModel {
                     // Убираем проверку существования пользователя alice, так как метода getUserByIdSynchronous нет
                     // и для тестовых данных предполагаем, что alice_001 будет создана.
                     addSampleProjects(defaultOwnerId);
+                    // Добавляем тестовые задачи после создания проектов
+                    addSampleTasks(defaultOwnerId);
                 } else {
                     allProjects.removeObserver(this);
                 }
@@ -232,28 +238,26 @@ public class TaskViewModel extends AndroidViewModel {
 
     private void addSampleProjects(String ownerId) {
         if (ownerId == null) {
-            Log.e(TAG, "Cannot add sample projects: ownerId is null.");
-            // Пытаемся получить текущего пользователя, если он уже установлен
+            Log.e(TAG, "Cannot add sample projects: ownerId is null. Attempting to use current user or default.");
             User currentUser = CurrentUserManager.getCurrentUser();
             if (currentUser != null) {
                 ownerId = currentUser.getUserId();
             } else {
-                 // Если текущий пользователь не установлен, используем ID по умолчанию или возвращаемся
                 ownerId = "alice_001"; // Запасной вариант
-                Log.w(TAG, "Defaulting to ownerId 'alice_001' for sample projects as current user is null.");
+                Log.w(TAG, "Defaulting to ownerId '" + ownerId + "' for sample projects as current user is null and ownerId was null.");
             }
         }
 
-        Project project1 = new Project("Личный проект Альфа", ownerId);
-        project1.setDescription("Задачи для личного развития и хобби.");
+        Project project1 = new Project("Особистий проект", ownerId);
+        project1.setDescription("Особисті справи та хобі");
         project1.setColorHex("#FF5722"); // Оранжевый
 
-        Project project2 = new Project("Работа Бета", ownerId);
-        project2.setDescription("Все рабочие задачи и совещания.");
+        Project project2 = new Project("Робота", ownerId);
+        project2.setDescription("Робочі завдання та проекти");
         project2.setColorHex("#2196F3"); // Синий
 
-        Project project3 = new Project("Дом Гамма", ownerId);
-        project3.setDescription("Задачи по дому и семейным делам.");
+        Project project3 = new Project("Дім", ownerId);
+        project3.setDescription("Домашні справи та сімейні плани");
         project3.setColorHex("#4CAF50"); // Зеленый
 
         insertProject(project1);
@@ -263,9 +267,9 @@ public class TaskViewModel extends AndroidViewModel {
     }
 
     private void addSampleUsers() {
-        // Используем конструктор User(email, name)
-        User user1 = new User("alice@example.com", "Alice Wonderland");
-        user1.setUserId("alice_001"); // Устанавливаем предопределенный ID для удобства
+        User user1 = new User("alice@example.com", "Користувач");
+        user1.setUserId("alice_001");
+        insertUser(user1);
 
         User user2 = new User("bob@example.com", "Bob The Builder");
         user2.setUserId("bob_002");
@@ -279,7 +283,6 @@ public class TaskViewModel extends AndroidViewModel {
         User user5 = new User("edward@example.com", "Edward Nigma");
         user5.setUserId("edward_005");
 
-        insertUser(user1);
         insertUser(user2);
         insertUser(user3);
         insertUser(user4);
@@ -321,5 +324,148 @@ public class TaskViewModel extends AndroidViewModel {
 
     public void deleteAllCommentsForTask(String taskId) {
         repository.deleteAllCommentsForTask(taskId);
+    }
+
+    private void addSampleTasks(String ownerId) {
+        if (ownerId == null) {
+            Log.e(TAG, "Cannot add sample tasks: ownerId is null");
+            return;
+        }
+
+        // Получаем проекты по ownerId из базы данных в синхронном режиме
+        Calendar calendar = Calendar.getInstance();
+        
+        // Задача 1: В проекте "Робота"
+        Task task1 = new Task("Підготувати звіт", ownerId);
+        task1.setDescription("Зібрати дані та підготувати щомісячний звіт для керівництва");
+        calendar.add(Calendar.DAY_OF_MONTH, 3);
+        task1.setDueDate(calendar.getTime());
+        task1.setPriority(3); // Высокий
+        task1.setAssigneeUserId("alice_001");
+        task1.setStatus("in_progress");
+        // task1.setProjectId будет установлено в обзервере проектов        
+        insert(task1);
+
+        // Задача 2: В проекте "Особистий проект"
+        Task task2 = new Task("Організувати зустріч", ownerId);
+        task2.setDescription("Запланувати і провести зустріч команди для обговорення нових завдань");
+        calendar.add(Calendar.DAY_OF_MONTH, 2);
+        task2.setDueDate(calendar.getTime());
+        task2.setPriority(2); // Средний
+        task2.setAssigneeUserId("bob_002");
+        task2.setStatus("todo");
+        // task2.setProjectId будет установлено в обзервере проектов
+        insert(task2);
+
+        // Задача 3: В проекте "Дім"
+        Task task3 = new Task("Вивчити новий фреймворк", ownerId);
+        task3.setDescription("Пройти онлайн-курс по новому фреймворку і зробити тестовий проект");
+        calendar.add(Calendar.DAY_OF_MONTH, 14);
+        task3.setDueDate(calendar.getTime());
+        task3.setPriority(1); // Низкий
+        task3.setAssigneeUserId("charlie_003");
+        task3.setStatus("todo");
+        // task3.setProjectId будет установлено в обзервере проектов
+        insert(task3);
+
+        // Задача 4: Без проекта
+        Task task4 = new Task("Особиста задача", ownerId);
+        task4.setDescription("Задача без прив'язки до проекту");
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        task4.setDueDate(calendar.getTime());
+        task4.setPriority(2); // Средний
+        task4.setAssigneeUserId("alice_001");
+        task4.setStatus("on_hold"); // Отложена
+        insert(task4);
+
+        Log.d(TAG, "Added 4 sample tasks to the database for owner: " + ownerId);
+        
+        // Устанавливаем projectId для задач после того, как проекты созданы
+        // Это будет работать асинхронно через LiveData, пока просто добавим задачи
+        allProjects.observeForever(new androidx.lifecycle.Observer<List<Project>>() {
+            @Override
+            public void onChanged(List<Project> projects) {
+                if (projects != null && !projects.isEmpty()) {
+                    allProjects.removeObserver(this);
+                    
+                    try {
+                        // Найдем проекты по названиям
+                        String robotaProjectId = null;
+                        String personalProjectId = null;
+                        String domProjectId = null;
+                        
+                        for (Project project : projects) {
+                            if ("Робота".equals(project.getName())) {
+                                robotaProjectId = project.getProjectId();
+                            } else if ("Особистий проект".equals(project.getName())) {
+                                personalProjectId = project.getProjectId();
+                            } else if ("Дім".equals(project.getName())) {
+                                domProjectId = project.getProjectId();
+                            }
+                        }
+                        
+                        // Обновим задачи с projectId
+                        if (robotaProjectId != null) {
+                            task1.setProjectId(robotaProjectId);
+                            update(task1);
+                        }
+                        
+                        if (personalProjectId != null) {
+                            task2.setProjectId(personalProjectId);
+                            update(task2);
+                        }
+                        
+                        if (domProjectId != null) {
+                            task3.setProjectId(domProjectId);
+                            update(task3);
+                        }
+                        
+                        Log.d(TAG, "Updated sample tasks with project IDs");
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error updating sample tasks with project IDs: " + e.getMessage());
+                    }
+                }
+            }
+        });
+    }
+
+    private void updateProjectNamesToUkrainian() {
+        allProjects.observeForever(new androidx.lifecycle.Observer<List<Project>>() {
+            @Override
+            public void onChanged(List<Project> projects) {
+                if (projects != null && !projects.isEmpty()) {
+                    allProjects.removeObserver(this);
+                    
+                    for (Project project : projects) {
+                        boolean needUpdate = false;
+                        
+                        // Обновляем названия и описания проектов на украинском языке
+                        if ("Дом Гамма".equals(project.getName())) {
+                            project.setName("Дім");
+                            project.setDescription("Домашні справи та сімейні плани");
+                            project.setColorHex("#4CAF50"); // Зеленый
+                            needUpdate = true;
+                        } else if ("Личный проект Альфа".equals(project.getName())) {
+                            project.setName("Особистий проект");
+                            project.setDescription("Особисті справи та хобі");
+                            project.setColorHex("#FF5722"); // Оранжевый
+                            needUpdate = true;
+                        } else if ("Работа Бета".equals(project.getName())) {
+                            project.setName("Робота");
+                            project.setDescription("Робочі завдання та проекти");
+                            project.setColorHex("#2196F3"); // Синий
+                            needUpdate = true;
+                        }
+                        
+                        // Если название было изменено, обновляем проект в БД
+                        if (needUpdate) {
+                            updateProject(project);
+                        }
+                    }
+                    
+                    Log.d(TAG, "Project names updated to Ukrainian");
+                }
+            }
+        });
     }
 } 

@@ -1,18 +1,18 @@
 <resources>
     <!-- Priority Levels (Used in TaskEditFragment Spinner) -->
     <string-array name="priority_levels">
-        <item>Низкий</item>
-        <item>Средний</item>
-        <item>Высокий</item>
+        <item>Низький</item>
+        <item>Середній</item>
+        <item>Високий</item>
     </string-array>
 
     <!-- Task Statuses - Display Names (Used in TaskEditFragment Spinner) -->
     <string-array name="task_statuses_display">
-        <item>К выполнению</item>
-        <item>В процессе</item>
-        <item>Выполнена</item>
-        <item>Отложена</item>
-        <item>Отменена</item>
+        <item>До виконання</item>
+        <item>В процесі</item>
+        <item>Виконано</item>
+        <item>Відкладено</item>
+        <item>Скасовано</item>
     </string-array>
 
     <!-- Task Statuses - Values (Corresponding values for storage/logic) -->

@@ -14,7 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:title="Задача"
+            app:title="@string/task_title"
             app:titleTextColor="@android:color/white"
             app:menu="@menu/menu_task_edit" />
 
@@ -37,7 +37,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Название задачи">
+                android:hint="@string/task_title">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edit_text_title"
@@ -54,7 +54,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Описание задачи (необязательно)">
+                android:hint="@string/task_description">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edit_text_task_description"
@@ -71,7 +71,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Проект:"
+                android:text="@string/project_label"
                 style="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
             <Spinner
@@ -87,7 +87,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Исполнитель:" />
+                android:text="@string/assignee_label" />
 
             <Spinner
                 android:id="@+id/spinner_assignee"
@@ -101,7 +101,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Дата выполнения"
+                android:text="@string/due_date"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
             <TextView
@@ -111,7 +111,7 @@
                 android:layout_marginTop="8dp"
                 android:background="?attr/editTextBackground"
                 android:padding="12dp"
-                android:text="Дата не установлена"
+                android:text="@string/due_date_not_set"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
             <Button
@@ -120,13 +120,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:text="Изменить дату" />
+                android:text="@string/change_date_button" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Приоритет"
+                android:text="@string/priority"
                 style="@style/TextAppearance.MaterialComponents.Subtitle1"/>
 
             <Spinner
@@ -140,7 +140,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Статус"
+                android:text="@string/status"
                 style="@style/TextAppearance.MaterialComponents.Subtitle1"/>
 
             <Spinner
@@ -155,7 +155,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Напомнить"
+                android:text="@string/reminder_label"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
             <Spinner
@@ -170,7 +170,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Отслеживание времени"
+                android:text="@string/time_tracking_label"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
             <Chronometer
@@ -185,7 +185,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Всего затрачено: 00:00:00"
+                android:text="@string/total_time_spent_label"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
             <LinearLayout
@@ -200,7 +200,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Старт" />
+                    android:text="@string/start_button" />
 
                 <Button
                     android:id="@+id/button_pause_timer"
@@ -209,7 +209,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="Пауза"
+                    android:text="@string/pause_button"
                     android:enabled="false" />
 
                 <Button
@@ -219,7 +219,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:text="Стоп"
+                    android:text="@string/stop_button"
                     android:enabled="false" />
             </LinearLayout>
 
@@ -227,7 +227,7 @@
                 android:id="@+id/saveTaskButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Сохранить" />
+                android:text="@string/save" />
 
             <FrameLayout
                 android:id="@+id/commentsFragmentContainer"
@@ -249,7 +249,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:contentDescription="Сохранить задачу"
+        android:contentDescription="@string/save_task_fab_content_desc"
         app:srcCompat="@drawable/ic_save" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

@@ -1,22 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Time Management App</string>
-    <string name="add_task">Добавить задачу</string>
-    <string name="task_title">Название задачи</string>
-    <string name="task_description">Описание задачи</string>
-    <string name="due_date">Срок выполнения</string>
-    <string name="priority">Приоритет</string>
+    <string name="add_task">Додати завдання</string>
+    <string name="task_title">Назва завдання</string>
+    <string name="task_description">Опис завдання</string>
+    <string name="due_date">Дата виконання</string>
+    <string name="priority">Пріоритет</string>
     <string name="status">Статус</string>
-    <string name="save">Сохранить</string>
-    <string name="cancel">Отмена</string>
-    <string name="low_priority">Низкий</string>
-    <string name="medium_priority">Средний</string>
-    <string name="high_priority">Высокий</string>
-    <string name="todo_status">К выполнению</string>
-    <string name="in_progress_status">В процессе</string>
+    <string name="save">Зберегти</string>
+    <string name="cancel">Скасувати</string>
+    <string name="low_priority">Низький</string>
+    <string name="medium_priority">Середній</string>
+    <string name="high_priority">Високий</string>
+    <string name="todo_status">До виконання</string>
+    <string name="in_progress_status">В процесі</string>
     <string name="done_status">Завершено</string>
-    <string name="no_tasks">Нет задач</string>
-    <string name="title_cannot_be_empty">Название не может быть пустым</string>
-    <string name="tasks">Задачи</string>
-    <string name="calendar">Календарь</string>
+    <string name="no_tasks">Немає завдань</string>
+    <string name="title_cannot_be_empty">Назва не може бути порожньою</string>
+    <string name="tasks">Завдання</string>
+    <string name="calendar">Календар</string>
+    <string name="edit_task">Редагування завдання</string>
+
+    <string name="project_label">Проект:</string>
+    <string name="assignee_label">Виконавець:</string>
+    <string name="due_date_not_set">Дата не встановлена</string>
+    <string name="change_date_button">Змінити дату</string>
+    <string name="reminder_label">Нагадати:</string>
+    <string name="time_tracking_label">Відстеження часу:</string>
+    <string name="total_time_spent_label">Всього витрачено:</string>
+    <string name="start_button">Старт</string>
+    <string name="pause_button">Пауза</string>
+    <string name="stop_button">Стоп</string>
+    <string name="save_task_fab_content_desc">Зберегти завдання</string>
+
 </resources>

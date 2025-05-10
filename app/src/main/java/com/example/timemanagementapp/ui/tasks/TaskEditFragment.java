@@ -232,7 +232,7 @@ public class TaskEditFragment extends Fragment {
         spinnerReminderTime.setSelection(0); // "Не напоминать"
 
         if (projectSpinnerAdapter != null && projectSpinnerAdapter.getCount() > 0) {
-            spinnerProject.setSelection(0); // "Без проекта"
+            spinnerProject.setSelection(0); // "Без проекту"
         }
 
         if (assigneeSpinnerAdapter != null && assigneeSpinnerAdapter.getCount() > 0) {
@@ -327,7 +327,7 @@ public class TaskEditFragment extends Fragment {
                 projectListInternal.addAll(projects);
 
                 List<String> projectDisplayNames = new ArrayList<>();
-                projectDisplayNames.add("Без проекта");
+                projectDisplayNames.add("Без проекту");
                 for (Project project : projectListInternal) {
                     projectDisplayNames.add(project.getName());
                 }
@@ -338,7 +338,7 @@ public class TaskEditFragment extends Fragment {
                 if (isEditMode && currentTaskForEdit != null) {
                     selectProjectInSpinner();
                 } else if (!isEditMode && spinnerProject.getSelectedItemPosition() != 0) {
-                    // Для новой задачи, если вдруг что-то выбралось, сбросить на "Без проекта"
+                    // Для новой задачи, если вдруг что-то выбралось, сбросить на "Без проекту"
                     spinnerProject.setSelection(0);
                 }
             }
@@ -388,25 +388,21 @@ public class TaskEditFragment extends Fragment {
     }
 
     private void selectProjectInSpinner() {
-        if (currentTaskForEdit == null || projectSpinnerAdapter == null || projectListInternal.isEmpty()) {
-            if (spinnerProject != null && projectSpinnerAdapter != null && projectSpinnerAdapter.getCount() > 0) spinnerProject.setSelection(0);
-            return;
-        }
-
-        String currentProjectId = currentTaskForEdit.getProjectId();
-        if (currentProjectId == null) {
-            spinnerProject.setSelection(0); // "Без проекта"
+        if (currentTaskForEdit.getProjectId() == null || currentTaskForEdit.getProjectId().isEmpty()) {
+            spinnerProject.setSelection(0); // "Без проекту"
             return;
         }
 
         for (int i = 0; i < projectListInternal.size(); i++) {
-            // Первый элемент "Без проекта", поэтому начинаем с i + 1 для адаптера
-            if (projectListInternal.get(i).getProjectId().equals(currentProjectId)) {
-                spinnerProject.setSelection(i + 1); // +1 из-за "Без проекта"
-                return;
+            if (projectListInternal.get(i).getProjectId().equals(currentTaskForEdit.getProjectId())) {
+                // Первый элемент "Без проекту", поэтому начинаем с i + 1 для адаптера
+                if (i + 1 < projectSpinnerAdapter.getCount()) {
+                    spinnerProject.setSelection(i + 1); // +1 из-за "Без проекту"
+                    return;
+                }
             }
         }
-        spinnerProject.setSelection(0); // Если не найден, ставим "Без проекта"
+        spinnerProject.setSelection(0); // Если не найден, ставим "Без проекту"
     }
 
     private void selectAssigneeInSpinner() {
@@ -456,7 +452,7 @@ public class TaskEditFragment extends Fragment {
             textViewDueDate.setText(sdf.format(date));
             textViewDueDate.setTag(date);
         } else {
-            textViewDueDate.setText("Дата не установлена");
+            textViewDueDate.setText(getString(R.string.due_date_not_set));
             textViewDueDate.setTag(null);
         }
     }
@@ -530,10 +526,12 @@ public class TaskEditFragment extends Fragment {
         String description = editTextTaskDescription.getText().toString().trim();
         Date dueDate = textViewDueDate.getTag() instanceof Date ? (Date) textViewDueDate.getTag() : null;
         String selectedProjectName = spinnerProject.getSelectedItem().toString();
-        String projectId = null;
-        if (spinnerProject.getSelectedItemPosition() > 0 && !projectListInternal.isEmpty()) {
-            // -1 потому что первый элемент "Без проекта"
-            projectId = projectListInternal.get(spinnerProject.getSelectedItemPosition() - 1).getProjectId();
+        String selectedProjectId = null;
+        int projectPosition = spinnerProject.getSelectedItemPosition();
+        if (projectPosition > 0) { // 0 - "Без проекту", всё остальное - из списка
+            // -1 потому что первый элемент "Без проекту"
+            Project selectedProject = projectListInternal.get(projectPosition - 1);
+            selectedProjectId = selectedProject.getProjectId();
         }
 
         String assigneeId = null;
@@ -560,7 +558,7 @@ public class TaskEditFragment extends Fragment {
             currentTaskForEdit.setPriority(priority);
             currentTaskForEdit.setStatus(status);
             currentTaskForEdit.setReminderOffsetMillisBeforeDueDate(reminderOffset);
-            currentTaskForEdit.setProjectId(projectId);
+            currentTaskForEdit.setProjectId(selectedProjectId);
             currentTaskForEdit.setAssigneeUserId(assigneeId);
             currentTaskForEdit.setUpdatedAt(new Date());
 
@@ -615,7 +613,7 @@ public class TaskEditFragment extends Fragment {
             newTask.setPriority(priority);
             newTask.setStatus(status);
             newTask.setReminderOffsetMillisBeforeDueDate(reminderOffset);
-            newTask.setProjectId(projectId);
+            newTask.setProjectId(selectedProjectId);
             newTask.setAssigneeUserId(assigneeId);
             // newTask.setTimeSpentMillis(accumulatedTimeSpentSessionUi); // Для новой задачи это будет единственное время
             // Новая задача: время = 0. Таймер запускается после создания и сохранения.

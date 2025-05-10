@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/nav_tasks"
         android:name="com.example.timemanagementapp.ui.tasks.TaskListFragment"
-        android:label="Задачи"
+        android:label="@string/tasks"
         tools:layout="@layout/fragment_task_list">
         <action
             android:id="@+id/action_tasks_to_edit_task"
@@ -18,13 +18,13 @@
     <fragment
         android:id="@+id/nav_calendar"
         android:name="com.example.timemanagementapp.ui.calendar.CalendarFragment"
-        android:label="Календарь"
+        android:label="@string/calendar"
         tools:layout="@layout/fragment_calendar" />
 
     <fragment
         android:id="@+id/nav_edit_task"
         android:name="com.example.timemanagementapp.ui.tasks.EditTaskFragment"
-        android:label="Редактирование задачи"
+        android:label="@string/edit_task"
         tools:layout="@layout/fragment_edit_task">
         <argument
             android:name="taskId"
