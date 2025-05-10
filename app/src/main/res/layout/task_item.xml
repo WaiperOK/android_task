@@ -41,8 +41,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-            android:visibility="gone" 
-            tools:text="Исполнитель: John Doe"
+            android:visibility="visible" 
+            tools:text="Виконавець: John Doe"
             tools:visibility="visible" />
 
         <LinearLayout

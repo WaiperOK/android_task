@@ -32,5 +32,7 @@
     <string name="pause_button">Пауза</string>
     <string name="stop_button">Стоп</string>
     <string name="save_task_fab_content_desc">Зберегти завдання</string>
+    <string name="assignee_format">Виконавець: %s</string>
+    <string name="assigned_to_me">Призначені мені</string>
 
 </resources>

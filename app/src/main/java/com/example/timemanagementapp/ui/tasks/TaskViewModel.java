@@ -11,6 +11,7 @@ import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.data.local.entity.User;
 import com.example.timemanagementapp.data.local.entity.TaskComment;
 import com.example.timemanagementapp.notifications.ReminderWorker;
+import com.example.timemanagementapp.notifications.TaskAssignmentNotifier;
 import java.util.List;
 import java.util.Date;
 import android.util.Log;
@@ -25,11 +26,13 @@ public class TaskViewModel extends AndroidViewModel {
     private LiveData<List<Task>> tasksSortedByPriority;
     private LiveData<List<Project>> allProjects;
     private LiveData<List<User>> allUsers;
+    private LiveData<List<Task>> tasksAssignedToMe;
 
     // Enum для режимов сортировки
     public enum SortMode {
         BY_DUE_DATE,
-        BY_PRIORITY
+        BY_PRIORITY,
+        ASSIGNED_TO_ME
     }
 
     private SortMode currentSortMode = SortMode.BY_DUE_DATE; // Режим по умолчанию
@@ -37,8 +40,21 @@ public class TaskViewModel extends AndroidViewModel {
     public TaskViewModel(@NonNull Application application) {
         super(application);
         repository = new TaskRepository(application);
+        
+        // Инициализируем канал уведомлений при создании ViewModel
+        TaskAssignmentNotifier.createNotificationChannel(application);
         tasksSortedByDueDate = repository.getAllTasks(); // Изначально это getAllTasksSortedByDueDate()
         tasksSortedByPriority = repository.getAllTasksSortedByPriority();
+        
+        // Получаем задачи, назначенные текущему пользователю
+        User currentUser = CurrentUserManager.getCurrentUser();
+        if (currentUser != null) {
+            tasksAssignedToMe = repository.getActiveTasksForUser(currentUser.getUserId());
+        } else {
+            // Если текущий пользователь не установлен, используем пустой список
+            tasksAssignedToMe = new MediatorLiveData<>();
+        }
+        
         allProjects = repository.getAllProjects(); // Получаем все проекты
         allUsers = repository.getAllUsers(); // Получаем всех пользователей
 
@@ -87,11 +103,42 @@ public class TaskViewModel extends AndroidViewModel {
     public void insert(Task task) {
         repository.insert(task);
         scheduleOrCancelReminder(task, false);
+        
+        // Если задача назначена другому пользователю (не создателю), отправляем уведомление
+        checkAndNotifyAssignment(task);
     }
 
     public void update(Task task) {
+        // Проверяем, изменился ли назначенный пользователь
+        if (task.getTaskId() != null) {
+            Task oldTask = repository.getTaskById(task.getTaskId()).getValue();
+            if (oldTask != null && !stringEquals(oldTask.getAssigneeUserId(), task.getAssigneeUserId())) {
+                // Если назначенный пользователь изменился, отправляем уведомление
+                checkAndNotifyAssignment(task);
+            }
+        }
+        
         repository.update(task);
         scheduleOrCancelReminder(task, false); // Перепланируем или отменяем при обновлении
+    }
+
+    // Вспомогательный метод для сравнения строк (учитывает null)
+    private boolean stringEquals(String s1, String s2) {
+        if (s1 == null) return s2 == null;
+        return s1.equals(s2);
+    }
+    
+    /**
+     * Проверяет и отправляет уведомление о назначении задачи, если нужно
+     */
+    private void checkAndNotifyAssignment(Task task) {
+        String assigneeId = task.getAssigneeUserId();
+        String currentUserId = CurrentUserManager.getCurrentUserId();
+        
+        // Отправляем уведомление только если назначен другой пользователь (не создатель)
+        if (assigneeId != null && !assigneeId.isEmpty() && !assigneeId.equals(currentUserId) && !assigneeId.equals(task.getCreatorUserId())) {
+            TaskAssignmentNotifier.notifyTaskAssigned(getApplication(), task, assigneeId);
+        }
     }
 
     public void delete(Task task) {
@@ -163,12 +210,24 @@ public class TaskViewModel extends AndroidViewModel {
         }
         currentSortMode = sortMode;
 
-        // Удаляем предыдущий источник, если он был
+        // Удаляем предыдущий источник
+        allTasksMediator.removeSource(tasksSortedByDueDate);
+        allTasksMediator.removeSource(tasksSortedByPriority);
+        if (tasksAssignedToMe != null) {
+            allTasksMediator.removeSource(tasksAssignedToMe);
+        }
+
+        // Добавляем новый источник в зависимости от режима сортировки
         if (sortMode == SortMode.BY_PRIORITY) {
-            allTasksMediator.removeSource(tasksSortedByDueDate);
             allTasksMediator.addSource(tasksSortedByPriority, tasks -> allTasksMediator.setValue(tasks));
+        } else if (sortMode == SortMode.ASSIGNED_TO_ME) {
+            if (tasksAssignedToMe != null) {
+                allTasksMediator.addSource(tasksAssignedToMe, tasks -> allTasksMediator.setValue(tasks));
+            } else {
+                // Если tasksAssignedToMe не инициализирован (например, текущий пользователь не установлен)
+                allTasksMediator.setValue(null);
+            }
         } else { // BY_DUE_DATE или любой другой режим по умолчанию
-            allTasksMediator.removeSource(tasksSortedByPriority);
             allTasksMediator.addSource(tasksSortedByDueDate, tasks -> allTasksMediator.setValue(tasks));
         }
     }

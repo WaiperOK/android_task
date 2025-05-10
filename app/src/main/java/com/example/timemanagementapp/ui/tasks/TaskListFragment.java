@@ -84,14 +84,12 @@ public class TaskListFragment extends Fragment {
         // Отмечаем текущий активный режим сортировки
         MenuItem sortByDueDateItem = menu.findItem(R.id.action_sort_by_due_date);
         MenuItem sortByPriorityItem = menu.findItem(R.id.action_sort_by_priority);
+        MenuItem assignedToMeItem = menu.findItem(R.id.action_assigned_to_me);
 
-        if (taskViewModel.getCurrentSortMode() == TaskViewModel.SortMode.BY_PRIORITY) {
-            sortByPriorityItem.setChecked(true);
-            sortByDueDateItem.setChecked(false);
-        } else {
-            sortByDueDateItem.setChecked(true);
-            sortByPriorityItem.setChecked(false);
-        }
+        TaskViewModel.SortMode currentMode = taskViewModel.getCurrentSortMode();
+        sortByDueDateItem.setChecked(currentMode == TaskViewModel.SortMode.BY_DUE_DATE);
+        sortByPriorityItem.setChecked(currentMode == TaskViewModel.SortMode.BY_PRIORITY);
+        assignedToMeItem.setChecked(currentMode == TaskViewModel.SortMode.ASSIGNED_TO_ME);
     }
 
     @Override
@@ -102,6 +100,9 @@ public class TaskListFragment extends Fragment {
             return true;
         } else if (itemId == R.id.action_sort_by_priority) {
             taskViewModel.setSortMode(TaskViewModel.SortMode.BY_PRIORITY);
+            return true;
+        } else if (itemId == R.id.action_assigned_to_me) {
+            taskViewModel.setSortMode(TaskViewModel.SortMode.ASSIGNED_TO_ME);
             return true;
         }
         return super.onOptionsItemSelected(item);

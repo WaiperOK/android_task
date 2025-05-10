@@ -81,7 +81,9 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
         // Отображение исполнителя
         if (currentTask.getAssigneeUserId() != null && !currentTask.getAssigneeUserId().isEmpty()) {
             String assigneeName = getUserNameById(currentTask.getAssigneeUserId());
-            holder.textViewTaskAssignee.setText("Исполнитель: " + assigneeName);
+            holder.textViewTaskAssignee.setText(
+                String.format(holder.itemView.getContext().getString(R.string.assignee_format), assigneeName)
+            );
             holder.textViewTaskAssignee.setVisibility(View.VISIBLE);
         } else {
             holder.textViewTaskAssignee.setVisibility(View.GONE);

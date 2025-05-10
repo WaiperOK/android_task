@@ -34,6 +34,14 @@
             tools:node="merge">
         </provider>
 
+        <receiver
+            android:name=".notifications.TaskNotificationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="OPEN_TASK" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
