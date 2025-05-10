@@ -94,11 +94,11 @@ public class TaskEditFragment extends Fragment {
     }
 
     private final List<ReminderOption> reminderOptions = Arrays.asList(
-            new ReminderOption("Не напоминать", null),
-            new ReminderOption("В день события (в 09:00)", 0L),
-            new ReminderOption("За 15 минут", TimeUnit.MINUTES.toMillis(15)),
-            new ReminderOption("За 30 минут", TimeUnit.MINUTES.toMillis(30)),
-            new ReminderOption("За 1 час", TimeUnit.HOURS.toMillis(1)),
+            new ReminderOption("Не нагадувати", null),
+            new ReminderOption("В день події (о 09:00)", 0L),
+            new ReminderOption("За 15 хвилин", TimeUnit.MINUTES.toMillis(15)),
+            new ReminderOption("За 30 хвилин", TimeUnit.MINUTES.toMillis(30)),
+            new ReminderOption("За 1 годину", TimeUnit.HOURS.toMillis(1)),
             new ReminderOption("За 1 день", TimeUnit.DAYS.toMillis(1))
     );
 
@@ -229,7 +229,7 @@ public class TaskEditFragment extends Fragment {
         }
         spinnerPriority.setSelection(1); // Medium priority
         spinnerStatus.setSelection(0);   // "To Do"
-        spinnerReminderTime.setSelection(0); // "Не напоминать"
+        spinnerReminderTime.setSelection(0); // "Не нагадувати"
 
         if (projectSpinnerAdapter != null && projectSpinnerAdapter.getCount() > 0) {
             spinnerProject.setSelection(0); // "Без проекту"
@@ -384,7 +384,7 @@ public class TaskEditFragment extends Fragment {
                 return;
             }
         }
-        spinnerReminderTime.setSelection(0); // "Не напоминать" по умолчанию
+        spinnerReminderTime.setSelection(0); // "Не нагадувати" по умолчанию
     }
 
     private void selectProjectInSpinner() {
