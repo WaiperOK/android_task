@@ -9,10 +9,12 @@ import com.example.timemanagementapp.data.TaskRepository;
 import com.example.timemanagementapp.data.local.entity.Task;
 import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.data.local.entity.User;
+import com.example.timemanagementapp.data.local.entity.TaskComment;
 import com.example.timemanagementapp.notifications.ReminderWorker;
 import java.util.List;
 import java.util.Date;
 import android.util.Log;
+import com.example.timemanagementapp.data.local.entity.CurrentUserManager;
 
 public class TaskViewModel extends AndroidViewModel {
     private static final String TAG = "TaskViewModel";
@@ -44,12 +46,31 @@ public class TaskViewModel extends AndroidViewModel {
             @Override
             public void onChanged(List<User> users) {
                 if (users == null || users.isEmpty()) {
-                    // Удаляем наблюдателя, чтобы избежать многократного добавления
                     allUsers.removeObserver(this);
                     addSampleUsers();
+                } else {
+                    // Для MVP: выбираем первого пользователя как текущего
+                    if (CurrentUserManager.getCurrentUser() == null) { // Устанавливаем, только если еще не установлен
+                        CurrentUserManager.setCurrentUser(users.get(0));
+                    }
+                    allUsers.removeObserver(this);
                 }
-                 // Можно также удалить наблюдателя здесь, если он нужен только для однократной проверки
-                 // allUsers.removeObserver(this); 
+            }
+        });
+
+        // Добавление тестовых проектов, если их нет
+        allProjects.observeForever(new androidx.lifecycle.Observer<List<Project>>() {
+            @Override
+            public void onChanged(List<Project> projects) {
+                if (projects == null || projects.isEmpty()) {
+                    allProjects.removeObserver(this);
+                    String defaultOwnerId = "alice_001"; // Используем ID Алисы
+                    // Убираем проверку существования пользователя alice, так как метода getUserByIdSynchronous нет
+                    // и для тестовых данных предполагаем, что alice_001 будет создана.
+                    addSampleProjects(defaultOwnerId);
+                } else {
+                    allProjects.removeObserver(this);
+                }
             }
         });
 
@@ -209,6 +230,38 @@ public class TaskViewModel extends AndroidViewModel {
         repository.insertUser(user);
     }
 
+    private void addSampleProjects(String ownerId) {
+        if (ownerId == null) {
+            Log.e(TAG, "Cannot add sample projects: ownerId is null.");
+            // Пытаемся получить текущего пользователя, если он уже установлен
+            User currentUser = CurrentUserManager.getCurrentUser();
+            if (currentUser != null) {
+                ownerId = currentUser.getUserId();
+            } else {
+                 // Если текущий пользователь не установлен, используем ID по умолчанию или возвращаемся
+                ownerId = "alice_001"; // Запасной вариант
+                Log.w(TAG, "Defaulting to ownerId 'alice_001' for sample projects as current user is null.");
+            }
+        }
+
+        Project project1 = new Project("Личный проект Альфа", ownerId);
+        project1.setDescription("Задачи для личного развития и хобби.");
+        project1.setColorHex("#FF5722"); // Оранжевый
+
+        Project project2 = new Project("Работа Бета", ownerId);
+        project2.setDescription("Все рабочие задачи и совещания.");
+        project2.setColorHex("#2196F3"); // Синий
+
+        Project project3 = new Project("Дом Гамма", ownerId);
+        project3.setDescription("Задачи по дому и семейным делам.");
+        project3.setColorHex("#4CAF50"); // Зеленый
+
+        insertProject(project1);
+        insertProject(project2);
+        insertProject(project3);
+        Log.d(TAG, "Added 3 sample projects to the database for owner: " + ownerId);
+    }
+
     private void addSampleUsers() {
         // Используем конструктор User(email, name)
         User user1 = new User("alice@example.com", "Alice Wonderland");
@@ -220,11 +273,53 @@ public class TaskViewModel extends AndroidViewModel {
         User user3 = new User("charlie@example.com", "Charlie Chaplin");
         user3.setUserId("charlie_003");
 
+        User user4 = new User("diana@example.com", "Diana Prince");
+        user4.setUserId("diana_004");
+
+        User user5 = new User("edward@example.com", "Edward Nigma");
+        user5.setUserId("edward_005");
+
         insertUser(user1);
         insertUser(user2);
         insertUser(user3);
-        Log.d(TAG, "Added 3 sample users to the database.");
+        insertUser(user4);
+        insertUser(user5);
+        Log.d(TAG, "Added 5 sample users to the database.");
     }
 
     // Можно добавить updateUser, deleteUser если они нужны напрямую из ViewModel
+
+    // Методы для работы с комментариями
+    public void addComment(String taskId, String text) {
+        User currentUser = CurrentUserManager.getCurrentUser();
+        if (currentUser != null) {
+            TaskComment comment = new TaskComment(taskId, currentUser.getUserId(), text);
+            repository.insertComment(comment);
+        }
+    }
+
+    public void updateComment(TaskComment comment) {
+        comment.setUpdatedAt(new Date());
+        repository.updateComment(comment);
+    }
+
+    public void deleteComment(TaskComment comment) {
+        repository.deleteComment(comment);
+    }
+
+    public LiveData<List<TaskComment>> getCommentsForTask(String taskId) {
+        return repository.getCommentsForTask(taskId);
+    }
+
+    public LiveData<TaskComment> getCommentById(String commentId) {
+        return repository.getCommentById(commentId);
+    }
+
+    public LiveData<Integer> getCommentCountForTask(String taskId) {
+        return repository.getCommentCountForTask(taskId);
+    }
+
+    public void deleteAllCommentsForTask(String taskId) {
+        repository.deleteAllCommentsForTask(taskId);
+    }
 } 

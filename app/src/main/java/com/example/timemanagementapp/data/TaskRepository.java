@@ -6,9 +6,11 @@ import com.example.timemanagementapp.data.local.AppDatabase;
 import com.example.timemanagementapp.data.local.dao.TaskDao;
 import com.example.timemanagementapp.data.local.dao.ProjectDao;
 import com.example.timemanagementapp.data.local.dao.UserDao;
+import com.example.timemanagementapp.data.local.dao.TaskCommentDao;
 import com.example.timemanagementapp.data.local.entity.Task;
 import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.data.local.entity.User;
+import com.example.timemanagementapp.data.local.entity.TaskComment;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,6 +19,7 @@ public class TaskRepository {
     private TaskDao taskDao;
     private ProjectDao projectDao;
     private UserDao userDao;
+    private TaskCommentDao taskCommentDao;
     private LiveData<List<Task>> allTasks;
     private LiveData<List<Project>> allProjects;
     private LiveData<List<User>> allUsers;
@@ -27,6 +30,7 @@ public class TaskRepository {
         taskDao = database.taskDao();
         projectDao = database.projectDao();
         userDao = database.userDao();
+        taskCommentDao = database.taskCommentDao();
         allTasks = taskDao.getAllTasksSortedByDueDate();
         allProjects = projectDao.getAllProjects();
         allUsers = userDao.getAllUsers();
@@ -116,5 +120,34 @@ public class TaskRepository {
 
     public LiveData<User> getUserById(String userId) {
         return userDao.getUserById(userId);
+    }
+
+    // Методы для работы с комментариями
+    public void insertComment(TaskComment comment) {
+        executorService.execute(() -> taskCommentDao.insert(comment));
+    }
+
+    public void updateComment(TaskComment comment) {
+        executorService.execute(() -> taskCommentDao.update(comment));
+    }
+
+    public void deleteComment(TaskComment comment) {
+        executorService.execute(() -> taskCommentDao.delete(comment));
+    }
+
+    public LiveData<List<TaskComment>> getCommentsForTask(String taskId) {
+        return taskCommentDao.getCommentsForTask(taskId);
+    }
+
+    public LiveData<TaskComment> getCommentById(String commentId) {
+        return taskCommentDao.getCommentById(commentId);
+    }
+
+    public LiveData<Integer> getCommentCountForTask(String taskId) {
+        return taskCommentDao.getCommentCountForTask(taskId);
+    }
+
+    public void deleteAllCommentsForTask(String taskId) {
+        executorService.execute(() -> taskCommentDao.deleteAllCommentsForTask(taskId));
     }
 } 

@@ -12,13 +12,16 @@ import com.example.timemanagementapp.data.local.dao.UserDao;
 import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.data.local.entity.Task;
 import com.example.timemanagementapp.data.local.entity.User;
+import com.example.timemanagementapp.data.local.dao.TaskCommentDao;
+import com.example.timemanagementapp.data.local.entity.TaskComment;
 
-@Database(entities = {Task.class, Project.class, User.class}, version = 4, exportSchema = false)
+@Database(entities = {Task.class, Project.class, User.class, TaskComment.class}, version = 5, exportSchema = false)
 @TypeConverters({DateConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static final String DATABASE_NAME = "time_management_db";
     private static volatile AppDatabase INSTANCE;
-
+    
+    public abstract TaskCommentDao taskCommentDao();
     public abstract TaskDao taskDao();
     public abstract ProjectDao projectDao();
     public abstract UserDao userDao();

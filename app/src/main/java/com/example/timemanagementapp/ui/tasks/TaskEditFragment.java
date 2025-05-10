@@ -28,6 +28,7 @@ import com.example.timemanagementapp.R;
 import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.data.local.entity.Task;
 import com.example.timemanagementapp.data.local.entity.User;
+import com.example.timemanagementapp.data.local.entity.CurrentUserManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -69,6 +70,8 @@ public class TaskEditFragment extends Fragment {
     private long timeWhenPaused = 0;
     private long accumulatedTimeSpentSessionUi = 0; // Время, накопленное в UI в текущей сессии редактирования
 
+    private Task currentTask; // Existing field
+
     // Внутренний класс для опций напоминаний
     private static class ReminderOption {
         private final String displayName;
@@ -104,14 +107,17 @@ public class TaskEditFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         taskViewModel = new ViewModelProvider(requireActivity()).get(TaskViewModel.class);
+        android.util.Log.d("CommentsDebug", "TaskEditFragment.onCreate called");
 
         if (getArguments() != null && getArguments().containsKey("taskId")) {
             String taskId = getArguments().getString("taskId");
+            android.util.Log.d("CommentsDebug", "TaskEditFragment.onCreate: taskId received = " + taskId);
             if (taskId != null) {
                 isEditMode = true;
                 taskViewModel.getTaskById(taskId).observe(this, task -> {
                     if (task != null) {
                         currentTaskForEdit = new Task(task); // Работаем с копией
+                        android.util.Log.d("CommentsDebug", "TaskEditFragment: task loaded, ID = " + task.getTaskId());
                         if (getView() != null) {
                             loadTaskDataToUI();
                         }
@@ -119,6 +125,7 @@ public class TaskEditFragment extends Fragment {
                 });
             }
         } else {
+            android.util.Log.d("CommentsDebug", "TaskEditFragment.onCreate: NO taskId in arguments");
             currentTaskForEdit = null; // Новая задача
             isEditMode = false;
             if (getArguments() != null && getArguments().containsKey(ARG_DUE_DATE)) {
@@ -178,13 +185,6 @@ public class TaskEditFragment extends Fragment {
              resetToDefaultState(); // Для новой задачи, если onCreateView не успел
         }
 
-        if (projectSpinnerAdapter != null && projectSpinnerAdapter.getCount() > 0) {
-            spinnerProject.setSelection(0); // "Без проекта"
-        }
-        if (assigneeSpinnerAdapter != null && assigneeSpinnerAdapter.getCount() > 0) {
-            spinnerAssignee.setSelection(0); // "Не назначен"
-        }
-
         chronometerTask.stop();
         chronometerTask.setBase(SystemClock.elapsedRealtime());
         accumulatedTimeSpentSessionUi = 0;
@@ -193,6 +193,17 @@ public class TaskEditFragment extends Fragment {
         buttonStartTime.setEnabled(true);
         buttonPauseTimer.setEnabled(false);
         buttonStopTimer.setEnabled(false);
+
+        if (getArguments() != null && getArguments().containsKey(ARG_TASK_ID)) {
+            String taskId = getArguments().getString(ARG_TASK_ID);
+            if (taskId != null) {
+                loadTaskData(taskId); // This will load currentTask and then comments
+            }
+            // Для нового режима задачи начальная настройка спиннеров обрабатывается в resetToDefaultState
+            // и через observeProjects/observeUsers.
+        }
+        // Для нового режима задачи начальная настройка спиннеров обрабатывается в resetToDefaultState
+        // и через observeProjects/observeUsers.
     }
 
     private void updateToolbarTitle() {
@@ -339,12 +350,17 @@ public class TaskEditFragment extends Fragment {
             if (users == null) return;
 
             userListInternal.clear();
-            userListInternal.addAll(users);
+            // Исключаем текущего пользователя из списка исполнителей
+            String currentUserId = CurrentUserManager.getCurrentUserId();
+            for (User user : users) {
+                if (user.getUserId().equals(currentUserId)) continue;
+                userListInternal.add(user);
+            }
 
             List<String> userNames = new ArrayList<>();
             userNames.add("Не назначен"); // Опция по умолчанию
-            for (User user : users) {
-                userNames.add(user.getName()); // Используем user.getName() вместо user.getUsername()
+            for (User user : userListInternal) {
+                userNames.add(user.getName());
             }
 
             assigneeSpinnerAdapter.clear();
@@ -587,8 +603,12 @@ public class TaskEditFragment extends Fragment {
             taskViewModel.update(currentTaskForEdit);
             Toast.makeText(requireContext(), "Задача обновлена", Toast.LENGTH_SHORT).show();
         } else {
-            // TODO: Получить реальный ID пользователя
-            String creatorId = "default_user_id";
+            // Получаем реальный ID пользователя
+            String creatorId = CurrentUserManager.getCurrentUserId();
+            if (creatorId == null) {
+                Toast.makeText(requireContext(), "Ошибка: не определён текущий пользователь", Toast.LENGTH_SHORT).show();
+                return;
+            }
             Task newTask = new Task(title, creatorId);
             newTask.setDescription(description);
             newTask.setDueDate(dueDate);
@@ -642,5 +662,67 @@ public class TaskEditFragment extends Fragment {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void loadTaskData(String taskId) {
+        android.util.Log.d("CommentsDebug", "TaskEditFragment.loadTaskData called for taskId: " + taskId);
+        
+        taskViewModel.getTaskById(taskId).observe(getViewLifecycleOwner(), task -> {
+            if (task != null) {
+                this.currentTask = task; // Corrected: Use existing currentTask field
+                android.util.Log.d("CommentsDebug", "TaskEditFragment.loadTaskData: task loaded for UI update, ID = " + task.getTaskId());
+                
+                editTextTaskTitle.setText(task.getTitle());
+                editTextTaskDescription.setText(task.getDescription());
+                updateDueDateDisplay(task.getDueDate());
+                spinnerPriority.setSelection(task.getPriority() - 1);
+                String[] statusArray = getResources().getStringArray(R.array.task_statuses_values);
+                for (int i = 0; i < statusArray.length; i++) {
+                    if (statusArray[i].equals(task.getStatus())) {
+                        spinnerStatus.setSelection(i);
+                        break;
+                    }
+                }
+                selectReminderOptionInSpinner(task.getReminderOffsetMillisBeforeDueDate());
+                selectProjectInSpinner();
+                selectAssigneeInSpinner();
+                if (task.getTimeTrackingStartTimeMillis() != null && task.getTimeTrackingStartTimeMillis() > 0) {
+                    long trackedMillis = System.currentTimeMillis() - task.getTimeTrackingStartTimeMillis();
+                    chronometerTask.setBase(SystemClock.elapsedRealtime() - trackedMillis);
+                    chronometerTask.start();
+                    buttonStartTime.setEnabled(false);
+                    buttonPauseTimer.setEnabled(true);
+                    buttonStopTimer.setEnabled(true);
+                    accumulatedTimeSpentSessionUi = trackedMillis;
+                } else {
+                    chronometerTask.stop();
+                    chronometerTask.setBase(SystemClock.elapsedRealtime());
+                    accumulatedTimeSpentSessionUi = 0;
+                    buttonStartTime.setEnabled(true);
+                    buttonPauseTimer.setEnabled(false);
+                    buttonStopTimer.setEnabled(false);
+                }
+                updateTotalTimeSpentDisplay(task.getTimeSpentMillis());
+                
+                // Load comments only after task data is loaded
+                android.util.Log.d("CommentsDebug", "TaskEditFragment.loadTaskData: ABOUT TO LOAD COMMENTS for task: " + task.getTaskId());
+                loadCommentsFragment(task.getTaskId()); 
+                android.util.Log.d("CommentsDebug", "TaskEditFragment.loadTaskData: AFTER loadCommentsFragment call");
+            } else {
+                android.util.Log.e("CommentsDebug", "TaskEditFragment.loadTaskData: task is NULL for taskId: " + taskId);
+            }
+        });
+    }
+
+    private void loadCommentsFragment(String taskId) {
+        if (isAdded()) { // Check if fragment is added to an activity
+            android.util.Log.d("CommentsDebug", "TaskEditFragment: loadCommentsFragment called for taskId: " + taskId);
+            TaskCommentsFragment commentsFragment = TaskCommentsFragment.newInstance(taskId);
+            getChildFragmentManager().beginTransaction()
+                    .replace(R.id.commentsFragmentContainer, commentsFragment)
+                    .commit();
+        } else {
+            android.util.Log.w("CommentsDebug", "TaskEditFragment: loadCommentsFragment NOT called, fragment not added. TaskId: " + taskId);
+        }
     }
 } 
