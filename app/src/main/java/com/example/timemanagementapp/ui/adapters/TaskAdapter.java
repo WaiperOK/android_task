@@ -12,17 +12,21 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.timemanagementapp.R;
 import com.example.timemanagementapp.data.local.entity.Task;
+import com.example.timemanagementapp.data.local.entity.User;
 import com.example.timemanagementapp.ui.tasks.TaskViewModel;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import android.util.Log;
 import java.util.Objects;
+import java.util.List;
+import java.util.ArrayList;
 
 public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
     private static final String TAG = "TaskAdapter";
     private OnItemClickListener listener;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
     private TaskViewModel taskViewModel;
+    private List<User> userList = new ArrayList<>();
 
     public TaskAdapter(TaskViewModel taskViewModel) {
         super(DIFF_CALLBACK);
@@ -76,7 +80,8 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
         
         // Отображение исполнителя
         if (currentTask.getAssigneeUserId() != null && !currentTask.getAssigneeUserId().isEmpty()) {
-            holder.textViewTaskAssignee.setText("Исполнитель: " + currentTask.getAssigneeUserId());
+            String assigneeName = getUserNameById(currentTask.getAssigneeUserId());
+            holder.textViewTaskAssignee.setText("Исполнитель: " + assigneeName);
             holder.textViewTaskAssignee.setVisibility(View.VISIBLE);
         } else {
             holder.textViewTaskAssignee.setVisibility(View.GONE);
@@ -194,5 +199,20 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
+    }
+
+    public void setUserList(List<User> users) {
+        this.userList = users != null ? users : new ArrayList<>();
+        notifyDataSetChanged();
+    }
+
+    private String getUserNameById(String userId) {
+        if (userId == null) return "";
+        for (User user : userList) {
+            if (userId.equals(user.getUserId())) {
+                return user.getName();
+            }
+        }
+        return userId; // Если не найдено, возвращаем ID
     }
 } 

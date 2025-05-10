@@ -58,7 +58,6 @@ public class CalendarFragment extends Fragment {
         tasksRecyclerView = view.findViewById(R.id.recycler_view_calendar_tasks);
 
         setupCalendarView();
-        observeTasks();
         
         // Настройка FAB для добавления задачи на выбранную дату
         FloatingActionButton fabAddTask = view.findViewById(R.id.fab_add_task);
@@ -80,6 +79,14 @@ public class CalendarFragment extends Fragment {
         taskViewModel = new ViewModelProvider(requireActivity()).get(TaskViewModel.class);
 
         setupRecyclerView();
+        observeTasks();
+
+        // Передача пользователей в адаптер
+        taskViewModel.getAllUsers().observe(getViewLifecycleOwner(), users -> {
+            if (users != null && taskAdapter != null) {
+                taskAdapter.setUserList(users);
+            }
+        });
         
         // Добавляем слушатель клика на задачу
         taskAdapter.setOnItemClickListener(task -> {
