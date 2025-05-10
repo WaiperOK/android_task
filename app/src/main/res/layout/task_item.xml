@@ -35,6 +35,16 @@
             android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
             tools:text="30 Май 2023" />
 
+        <TextView
+            android:id="@+id/text_view_task_assignee"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+            android:visibility="gone" 
+            tools:text="Исполнитель: John Doe"
+            tools:visibility="visible" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

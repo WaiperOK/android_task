@@ -27,6 +27,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.timemanagementapp.R;
 import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.data.local.entity.Task;
+import com.example.timemanagementapp.data.local.entity.User;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -51,7 +52,7 @@ public class TaskEditFragment extends Fragment {
     private TextView textViewDueDate, textViewTotalTimeSpent;
     private Chronometer chronometerTask;
     private FloatingActionButton fabSaveTask;
-    private Spinner spinnerPriority, spinnerStatus, spinnerReminderTime, spinnerProject;
+    private Spinner spinnerPriority, spinnerStatus, spinnerReminderTime, spinnerProject, spinnerAssignee;
 
     private TaskViewModel taskViewModel;
     private Task currentTaskForEdit; // Используем для хранения копии задачи при редактировании
@@ -61,6 +62,9 @@ public class TaskEditFragment extends Fragment {
 
     private List<Project> projectListInternal = new ArrayList<>();
     private ArrayAdapter<String> projectSpinnerAdapter;
+
+    private List<User> userListInternal = new ArrayList<>(); // Список для хранения пользователей
+    private ArrayAdapter<String> assigneeSpinnerAdapter; // Адаптер для spinnerAssignee
 
     private long timeWhenPaused = 0;
     private long accumulatedTimeSpentSessionUi = 0; // Время, накопленное в UI в текущей сессии редактирования
@@ -136,6 +140,7 @@ public class TaskEditFragment extends Fragment {
         spinnerStatus = view.findViewById(R.id.spinner_status);
         spinnerReminderTime = view.findViewById(R.id.spinner_reminder_time);
         spinnerProject = view.findViewById(R.id.spinner_project);
+        spinnerAssignee = view.findViewById(R.id.spinner_assignee);
         chronometerTask = view.findViewById(R.id.chronometer_task_timer);
         buttonStartTime = view.findViewById(R.id.button_start_timer);
         buttonPauseTimer = view.findViewById(R.id.button_pause_timer);
@@ -164,6 +169,7 @@ public class TaskEditFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         updateToolbarTitle();
         observeProjects(); // Наблюдение за проектами начинаем здесь
+        observeUsers(); // Наблюдение за пользователями
 
         // Если currentTaskForEdit уже загружен (например, из onCreate), но UI еще не обновлен
         if (isEditMode && currentTaskForEdit != null && editTextTaskTitle.getText().toString().isEmpty()) {
@@ -171,6 +177,22 @@ public class TaskEditFragment extends Fragment {
         } else if (!isEditMode && editTextTaskTitle.getText().toString().isEmpty()){
              resetToDefaultState(); // Для новой задачи, если onCreateView не успел
         }
+
+        if (projectSpinnerAdapter != null && projectSpinnerAdapter.getCount() > 0) {
+            spinnerProject.setSelection(0); // "Без проекта"
+        }
+        if (assigneeSpinnerAdapter != null && assigneeSpinnerAdapter.getCount() > 0) {
+            spinnerAssignee.setSelection(0); // "Не назначен"
+        }
+
+        chronometerTask.stop();
+        chronometerTask.setBase(SystemClock.elapsedRealtime());
+        accumulatedTimeSpentSessionUi = 0;
+        timeWhenPaused = 0;
+        updateTotalTimeSpentDisplay(0); // Общее время 0 для новой задачи
+        buttonStartTime.setEnabled(true);
+        buttonPauseTimer.setEnabled(false);
+        buttonStopTimer.setEnabled(false);
     }
 
     private void updateToolbarTitle() {
@@ -202,6 +224,10 @@ public class TaskEditFragment extends Fragment {
             spinnerProject.setSelection(0); // "Без проекта"
         }
 
+        if (assigneeSpinnerAdapter != null && assigneeSpinnerAdapter.getCount() > 0) {
+            spinnerAssignee.setSelection(0); // "Не назначен"
+        }
+
         chronometerTask.stop();
         chronometerTask.setBase(SystemClock.elapsedRealtime());
         accumulatedTimeSpentSessionUi = 0;
@@ -231,6 +257,7 @@ public class TaskEditFragment extends Fragment {
 
         selectReminderOptionInSpinner(currentTaskForEdit.getReminderOffsetMillisBeforeDueDate());
         selectProjectInSpinner(); // Выбор проекта
+        selectAssigneeInSpinner(); // Выбор исполнителя
 
         // Логика отображения времени таймера
         if (currentTaskForEdit.getTimeTrackingStartTimeMillis() != null && currentTaskForEdit.getTimeTrackingStartTimeMillis() > 0) {
@@ -272,15 +299,14 @@ public class TaskEditFragment extends Fragment {
         spinnerReminderTime.setAdapter(reminderAdapter);
 
         // Project
-        setupProjectSpinner();
-    }
-
-    private void setupProjectSpinner() {
-        List<String> initialProjectNames = new ArrayList<>();
-        initialProjectNames.add("Без проекта");
-        projectSpinnerAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, initialProjectNames);
+        projectSpinnerAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
         projectSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerProject.setAdapter(projectSpinnerAdapter);
+
+        // Assignee
+        assigneeSpinnerAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
+        assigneeSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerAssignee.setAdapter(assigneeSpinnerAdapter);
     }
 
     private void observeProjects() {
@@ -308,6 +334,33 @@ public class TaskEditFragment extends Fragment {
         });
     }
 
+    private void observeUsers() {
+        taskViewModel.getAllUsers().observe(getViewLifecycleOwner(), users -> {
+            if (users == null) return;
+
+            userListInternal.clear();
+            userListInternal.addAll(users);
+
+            List<String> userNames = new ArrayList<>();
+            userNames.add("Не назначен"); // Опция по умолчанию
+            for (User user : users) {
+                userNames.add(user.getName()); // Используем user.getName() вместо user.getUsername()
+            }
+
+            assigneeSpinnerAdapter.clear();
+            assigneeSpinnerAdapter.addAll(userNames);
+            assigneeSpinnerAdapter.notifyDataSetChanged();
+
+            // Если мы в режиме редактирования и задача уже загружена, попробуем выбрать исполнителя
+            if (isEditMode && currentTaskForEdit != null) {
+                selectAssigneeInSpinner();
+            } else if (!isEditMode && spinnerAssignee.getSelectedItemPosition() == AdapterView.INVALID_POSITION && assigneeSpinnerAdapter.getCount() > 0) {
+                // Для новой задачи, если исполнитель еще не выбран и список не пуст
+                spinnerAssignee.setSelection(0); // "Не назначен"
+            }
+        });
+    }
+
     private void selectReminderOptionInSpinner(Long reminderOffset) {
         for (int i = 0; i < reminderOptions.size(); i++) {
             if (Objects.equals(reminderOptions.get(i).getOffsetMillis(), reminderOffset)) {
@@ -319,17 +372,46 @@ public class TaskEditFragment extends Fragment {
     }
 
     private void selectProjectInSpinner() {
-        if (projectSpinnerAdapter == null || projectSpinnerAdapter.getCount() == 0) return;
+        if (currentTaskForEdit == null || projectSpinnerAdapter == null || projectListInternal.isEmpty()) {
+            if (spinnerProject != null && projectSpinnerAdapter != null && projectSpinnerAdapter.getCount() > 0) spinnerProject.setSelection(0);
+            return;
+        }
 
-        if (currentTaskForEdit != null && currentTaskForEdit.getProjectId() != null && !projectListInternal.isEmpty()) {
-            for (int i = 0; i < projectListInternal.size(); i++) {
-                if (projectListInternal.get(i).getProjectId().equals(currentTaskForEdit.getProjectId())) {
-                    spinnerProject.setSelection(i + 1); // +1 из-за "Без проекта"
-                    return;
-                }
+        String currentProjectId = currentTaskForEdit.getProjectId();
+        if (currentProjectId == null) {
+            spinnerProject.setSelection(0); // "Без проекта"
+            return;
+        }
+
+        for (int i = 0; i < projectListInternal.size(); i++) {
+            // Первый элемент "Без проекта", поэтому начинаем с i + 1 для адаптера
+            if (projectListInternal.get(i).getProjectId().equals(currentProjectId)) {
+                spinnerProject.setSelection(i + 1); // +1 из-за "Без проекта"
+                return;
             }
         }
-        spinnerProject.setSelection(0); // "Без проекта"
+        spinnerProject.setSelection(0); // Если не найден, ставим "Без проекта"
+    }
+
+    private void selectAssigneeInSpinner() {
+        if (currentTaskForEdit == null || assigneeSpinnerAdapter == null || userListInternal.isEmpty()) {
+            if (spinnerAssignee != null && assigneeSpinnerAdapter != null && assigneeSpinnerAdapter.getCount() > 0) spinnerAssignee.setSelection(0);
+            return;
+        }
+
+        String currentAssigneeId = currentTaskForEdit.getAssigneeUserId();
+        if (currentAssigneeId == null) {
+            spinnerAssignee.setSelection(0); // "Не назначен"
+            return;
+        }
+
+        for (int i = 0; i < userListInternal.size(); i++) {
+            if (userListInternal.get(i).getUserId().equals(currentAssigneeId)) {
+                spinnerAssignee.setSelection(i + 1); // +1 из-за "Не назначен"
+                return;
+            }
+        }
+        spinnerAssignee.setSelection(0); // Если не найден, ставим "Не назначен"
     }
 
     private void setupDateTimePickers() {
@@ -424,13 +506,26 @@ public class TaskEditFragment extends Fragment {
     }
 
     private void saveTask() {
-        String title = editTextTaskTitle.getText().toString().trim();
+        String title = Objects.requireNonNull(editTextTaskTitle.getText()).toString().trim();
         if (title.isEmpty()) {
             Toast.makeText(requireContext(), "Название задачи не может быть пустым", Toast.LENGTH_SHORT).show();
             return;
         }
         String description = editTextTaskDescription.getText().toString().trim();
         Date dueDate = textViewDueDate.getTag() instanceof Date ? (Date) textViewDueDate.getTag() : null;
+        String selectedProjectName = spinnerProject.getSelectedItem().toString();
+        String projectId = null;
+        if (spinnerProject.getSelectedItemPosition() > 0 && !projectListInternal.isEmpty()) {
+            // -1 потому что первый элемент "Без проекта"
+            projectId = projectListInternal.get(spinnerProject.getSelectedItemPosition() - 1).getProjectId();
+        }
+
+        String assigneeId = null;
+        if (spinnerAssignee.getSelectedItemPosition() > 0 && !userListInternal.isEmpty()) {
+            // -1 потому что первый элемент "Не назначен"
+            assigneeId = userListInternal.get(spinnerAssignee.getSelectedItemPosition() - 1).getUserId();
+        }
+
         int priority = spinnerPriority.getSelectedItemPosition() + 1;
         String[] statusValues = getResources().getStringArray(R.array.task_statuses_values);
         String status = statusValues[spinnerStatus.getSelectedItemPosition()];
@@ -441,12 +536,6 @@ public class TaskEditFragment extends Fragment {
             reminderOffset = selectedOption.getOffsetMillis();
         }
 
-        String selectedProjectId = null;
-        int projectPosition = spinnerProject.getSelectedItemPosition();
-        if (projectPosition > 0 && !projectListInternal.isEmpty() && projectPosition <= projectListInternal.size()) {
-            selectedProjectId = projectListInternal.get(projectPosition - 1).getProjectId();
-        }
-
         if (isEditMode && currentTaskForEdit != null) {
             // Обновляем копию задачи
             currentTaskForEdit.setTitle(title);
@@ -455,7 +544,8 @@ public class TaskEditFragment extends Fragment {
             currentTaskForEdit.setPriority(priority);
             currentTaskForEdit.setStatus(status);
             currentTaskForEdit.setReminderOffsetMillisBeforeDueDate(reminderOffset);
-            currentTaskForEdit.setProjectId(selectedProjectId);
+            currentTaskForEdit.setProjectId(projectId);
+            currentTaskForEdit.setAssigneeUserId(assigneeId);
             currentTaskForEdit.setUpdatedAt(new Date());
 
             // Логика сохранения времени:
@@ -505,7 +595,8 @@ public class TaskEditFragment extends Fragment {
             newTask.setPriority(priority);
             newTask.setStatus(status);
             newTask.setReminderOffsetMillisBeforeDueDate(reminderOffset);
-            newTask.setProjectId(selectedProjectId);
+            newTask.setProjectId(projectId);
+            newTask.setAssigneeUserId(assigneeId);
             // newTask.setTimeSpentMillis(accumulatedTimeSpentSessionUi); // Для новой задачи это будет единственное время
             // Новая задача: время = 0. Таймер запускается после создания и сохранения.
             taskViewModel.insert(newTask);

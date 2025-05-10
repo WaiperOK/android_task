@@ -8,6 +8,7 @@ import androidx.room.TypeConverters;
 import com.example.timemanagementapp.data.local.converter.DateConverter;
 import com.example.timemanagementapp.data.local.dao.TaskDao;
 import com.example.timemanagementapp.data.local.dao.ProjectDao;
+import com.example.timemanagementapp.data.local.dao.UserDao;
 import com.example.timemanagementapp.data.local.entity.Project;
 import com.example.timemanagementapp.data.local.entity.Task;
 import com.example.timemanagementapp.data.local.entity.User;
@@ -20,6 +21,7 @@ public abstract class AppDatabase extends RoomDatabase {
 
     public abstract TaskDao taskDao();
     public abstract ProjectDao projectDao();
+    public abstract UserDao userDao();
     // Можно добавить другие DAO: ProjectDao, UserDao
 
     public static AppDatabase getInstance(Context context) {

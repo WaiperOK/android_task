@@ -8,6 +8,7 @@ import androidx.lifecycle.MediatorLiveData;
 import com.example.timemanagementapp.data.TaskRepository;
 import com.example.timemanagementapp.data.local.entity.Task;
 import com.example.timemanagementapp.data.local.entity.Project;
+import com.example.timemanagementapp.data.local.entity.User;
 import com.example.timemanagementapp.notifications.ReminderWorker;
 import java.util.List;
 import java.util.Date;
@@ -20,6 +21,7 @@ public class TaskViewModel extends AndroidViewModel {
     private LiveData<List<Task>> tasksSortedByDueDate;
     private LiveData<List<Task>> tasksSortedByPriority;
     private LiveData<List<Project>> allProjects;
+    private LiveData<List<User>> allUsers;
 
     // Enum для режимов сортировки
     public enum SortMode {
@@ -35,6 +37,21 @@ public class TaskViewModel extends AndroidViewModel {
         tasksSortedByDueDate = repository.getAllTasks(); // Изначально это getAllTasksSortedByDueDate()
         tasksSortedByPriority = repository.getAllTasksSortedByPriority();
         allProjects = repository.getAllProjects(); // Получаем все проекты
+        allUsers = repository.getAllUsers(); // Получаем всех пользователей
+
+        // Добавление тестовых пользователей, если их нет
+        allUsers.observeForever(new androidx.lifecycle.Observer<List<User>>() {
+            @Override
+            public void onChanged(List<User> users) {
+                if (users == null || users.isEmpty()) {
+                    // Удаляем наблюдателя, чтобы избежать многократного добавления
+                    allUsers.removeObserver(this);
+                    addSampleUsers();
+                }
+                 // Можно также удалить наблюдателя здесь, если он нужен только для однократной проверки
+                 // allUsers.removeObserver(this); 
+            }
+        });
 
         // Наблюдаем за источником данных по умолчанию
         setSortMode(SortMode.BY_DUE_DATE);
@@ -178,4 +195,36 @@ public class TaskViewModel extends AndroidViewModel {
         // В Task entity onDelete = ForeignKey.SET_NULL для project_id, так что projectId станет null
         repository.deleteProject(project);
     }
+
+    // --- Методы для пользователей ---
+    public LiveData<List<User>> getAllUsers() {
+        return allUsers;
+    }
+
+    public LiveData<User> getUserById(String userId) {
+        return repository.getUserById(userId);
+    }
+
+    public void insertUser(User user) {
+        repository.insertUser(user);
+    }
+
+    private void addSampleUsers() {
+        // Используем конструктор User(email, name)
+        User user1 = new User("alice@example.com", "Alice Wonderland");
+        user1.setUserId("alice_001"); // Устанавливаем предопределенный ID для удобства
+
+        User user2 = new User("bob@example.com", "Bob The Builder");
+        user2.setUserId("bob_002");
+
+        User user3 = new User("charlie@example.com", "Charlie Chaplin");
+        user3.setUserId("charlie_003");
+
+        insertUser(user1);
+        insertUser(user2);
+        insertUser(user3);
+        Log.d(TAG, "Added 3 sample users to the database.");
+    }
+
+    // Можно добавить updateUser, deleteUser если они нужны напрямую из ViewModel
 } 

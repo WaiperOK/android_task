@@ -82,6 +82,21 @@
                 android:minHeight="48dp" />
 
             <TextView
+                android:id="@+id/text_view_assignee_label"
+                style="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Исполнитель:" />
+
+            <Spinner
+                android:id="@+id/spinner_assignee"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="48dp" />
+
+            <TextView
                 android:id="@+id/text_view_due_date_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

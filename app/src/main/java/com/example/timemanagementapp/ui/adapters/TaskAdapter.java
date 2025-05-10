@@ -45,6 +45,7 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
                     oldItem.getPriority() == newItem.getPriority() &&
                     Objects.equals(oldItem.getDueDate(), newItem.getDueDate()) &&
                     oldItem.getTimeSpentMillis() == newItem.getTimeSpentMillis() &&
+                    Objects.equals(oldItem.getAssigneeUserId(), newItem.getAssigneeUserId()) &&
                     Objects.equals(oldItem.getTimeTrackingStartTimeMillis(), newItem.getTimeTrackingStartTimeMillis());
             Log.d("DiffUtil", "Result of areContentsTheSame: " + result);
             return result;
@@ -73,6 +74,14 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
             holder.textViewDueDate.setVisibility(View.GONE);
         }
         
+        // Отображение исполнителя
+        if (currentTask.getAssigneeUserId() != null && !currentTask.getAssigneeUserId().isEmpty()) {
+            holder.textViewTaskAssignee.setText("Исполнитель: " + currentTask.getAssigneeUserId());
+            holder.textViewTaskAssignee.setVisibility(View.VISIBLE);
+        } else {
+            holder.textViewTaskAssignee.setVisibility(View.GONE);
+        }
+
         // Отображение статуса
         holder.textViewStatus.setText(currentTask.getStatus());
         // Здесь можно также добавить логику для изменения фона/цвета текста статуса, если потребуется
@@ -154,6 +163,7 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
     class TaskViewHolder extends RecyclerView.ViewHolder {
         private TextView textViewTitle;
         private TextView textViewDueDate;
+        private TextView textViewTaskAssignee;
         private TextView textViewStatus;
         private TextView textViewPriority;
         private TextView textViewTimeSpent;
@@ -163,6 +173,7 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
             super(itemView);
             textViewTitle = itemView.findViewById(R.id.text_view_task_title);
             textViewDueDate = itemView.findViewById(R.id.text_view_task_due_date);
+            textViewTaskAssignee = itemView.findViewById(R.id.text_view_task_assignee);
             textViewStatus = itemView.findViewById(R.id.text_view_task_status);
             textViewPriority = itemView.findViewById(R.id.text_view_task_priority);
             textViewTimeSpent = itemView.findViewById(R.id.text_view_time_spent);
